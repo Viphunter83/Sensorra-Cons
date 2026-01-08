@@ -16,7 +16,7 @@ export async function login(formData: FormData) {
     });
 
     if (error) {
-        return { error: error.message };
+        redirect("/login?message=" + encodeURIComponent(error.message));
     }
 
     revalidatePath("/", "layout");
@@ -42,7 +42,7 @@ export async function signup(formData: FormData) {
     });
 
     if (error) {
-        return { error: error.message };
+        redirect("/login?message=" + encodeURIComponent(error.message));
     }
 
     revalidatePath("/", "layout");

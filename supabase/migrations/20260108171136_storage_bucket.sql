@@ -4,7 +4,7 @@ values ('sensorra-assets', 'sensorra-assets', true)
 on conflict (id) do nothing;
 
 -- Enable RLS
-alter table storage.objects enable row level security;
+-- alter table storage.objects enable row level security;
 
 -- Policy: Authenticated users can view files (simplified for now, ideally strictly linked to property access)
 create policy "Authenticated users can view sensorra-assets"

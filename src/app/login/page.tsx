@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function LoginPage({ searchParams }: { searchParams: { message: string } }) {
+export default async function LoginPage(props: { searchParams: Promise<{ message: string }> }) {
+    const searchParams = await props.searchParams;
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
             <Card className="w-full max-w-md">
