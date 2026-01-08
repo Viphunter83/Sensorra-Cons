@@ -3,7 +3,9 @@ import { SmartUploader } from "@/components/dashboard/smart-uploader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Calendar, DollarSign, Tag } from "lucide-react";
+import { FileText, Calendar, DollarSign, Tag, Box } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -33,6 +35,31 @@ export default async function DashboardPage() {
             {property ? (
                 <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-6">
+                        {/* Digital Twin Card */}
+                        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden relative border-0 shadow-lg">
+                            <div className="absolute right-0 top-0 h-full w-1/3 bg-white/5 skew-x-12 pointer-events-none" />
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-white">
+                                    <Box className="h-5 w-5 text-blue-400" />
+                                    Digital Twin
+                                </CardTitle>
+                                <CardDescription className="text-slate-300">
+                                    Interactive 3D model of your property
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-slate-400 mb-6">
+                                    Navigate through rooms and find localized documents instantly.
+                                </p>
+                                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white border-0 font-medium" asChild>
+                                    <Link href={`/property/${property.id}`}>
+                                        Launch 3D Viewer
+                                    </Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Property & Upload Card */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>{property.title}</CardTitle>

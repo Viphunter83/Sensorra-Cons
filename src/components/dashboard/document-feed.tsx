@@ -43,13 +43,13 @@ export function DocumentFeed({ propertyId }: { propertyId: string }) {
     }, [propertyId])
 
     const filteredDocs = documents.filter((doc) => {
-        const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesSearch = (doc.name || '').toLowerCase().includes(searchQuery.toLowerCase())
 
         let matchesZone = true
         if (selectedZone) {
             // Check if any tag contains the selected zone (case insensitive)
             matchesZone = doc.ai_metadata?.tags?.some(tag =>
-                tag.toLowerCase().includes(selectedZone.toLowerCase())
+                tag && typeof tag === 'string' && tag.toLowerCase().includes(selectedZone.toLowerCase())
             ) ?? false
         }
 
