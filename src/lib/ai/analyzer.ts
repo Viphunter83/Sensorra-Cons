@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-    baseURL: "https://openai.api.proxyapi.ru/v1",
+    baseURL: process.env.PROXY_BASE_URL || "https://api.proxyapi.ru/openai/v1",
     apiKey: process.env.PROXY_API_KEY,
 });
 
@@ -36,7 +36,7 @@ export async function analyzeDocument(text: string): Promise<AIAnalysisResult> {
 
     try {
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: process.env.AI_MODEL || "gpt-4o",
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: `Analyze this document content:\n\n${truncatedText}` },
