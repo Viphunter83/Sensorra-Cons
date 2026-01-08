@@ -48,7 +48,7 @@ export function CreateTenderDialog({ propertyId, zone }: CreateTenderDialogProps
     }
 
     return (
-        <Dialog open={open} onOpenChange={(val) => !loading && reset()}>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <Button size="sm" className="gap-2 shadow-lg bg-blue-600 hover:bg-blue-700" onClick={() => setOpen(true)}>
                     <Wand2 className="h-4 w-4" />
@@ -89,11 +89,19 @@ export function CreateTenderDialog({ propertyId, zone }: CreateTenderDialogProps
                         <div className="mx-auto w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
                             <Wand2 className="h-6 w-6" />
                         </div>
-                        <h3 className="font-medium text-lg">Tender Published!</h3>
-                        <p className="text-muted-foreground text-sm">
-                            Contractors can now view your request and place bids.
-                        </p>
-                        <Button variant="outline" onClick={reset}>Close</Button>
+                        <h3 className="font-medium text-lg">Success! Tender Published</h3>
+
+                        <div className="bg-muted/50 p-4 rounded-md text-left text-sm space-y-2">
+                            <p><strong>Status:</strong> <span className="text-green-600">Open for Bidding</span></p>
+                            <p>The AI has generated a Scope of Work and distributed it to contractors.</p>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <Button variant="default" asChild>
+                                <a href="/marketplace">View in Marketplace (Simulate Contractor)</a>
+                            </Button>
+                            <Button variant="outline" onClick={reset}>Close</Button>
+                        </div>
                     </div>
                 )}
             </DialogContent>

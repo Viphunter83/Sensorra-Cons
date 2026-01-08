@@ -27,8 +27,14 @@ const Room = ({ position, size, name, color, isActive, onClick }: RoomProps) => 
                     e.stopPropagation()
                     onClick()
                 }}
-                onPointerOver={() => setHover(true)}
-                onPointerOut={() => setHover(false)}
+                onPointerOver={() => {
+                    setHover(true)
+                    document.body.style.cursor = 'pointer'
+                }}
+                onPointerOut={() => {
+                    setHover(false)
+                    document.body.style.cursor = 'auto'
+                }}
             >
                 <boxGeometry args={size} />
                 <meshStandardMaterial
