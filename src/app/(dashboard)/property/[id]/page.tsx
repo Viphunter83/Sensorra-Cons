@@ -3,13 +3,14 @@
 import { usePropertyStore } from '@/lib/store/property-store'
 import { HouseModel } from '@/components/3d/house-model'
 import { DocumentFeed } from '@/components/dashboard/document-feed'
+import { CreateTenderDialog } from '@/components/tenders/create-tender-dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search } from 'lucide-react'
 import { useParams } from 'next/navigation'
 
 export default function PropertyPage() {
-    const { setSearch } = usePropertyStore()
+    const { setSearch, selectedZone } = usePropertyStore()
     const params = useParams()
     const id = params.id as string
 
@@ -21,6 +22,15 @@ export default function PropertyPage() {
                     <h2 className="font-semibold text-sm">Digital Twin Navigator</h2>
                     <p className="text-xs text-muted-foreground mt-1">Click rooms (Living Room, Kitchen) to filter documents.</p>
                 </div>
+
+                {selectedZone && (
+                    <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center pointer-events-none">
+                        <div className="pointer-events-auto bg-white/90 p-2 rounded-lg shadow-lg backdrop-blur">
+                            <CreateTenderDialog propertyId={id} zone={selectedZone} />
+                        </div>
+                    </div>
+                )}
+
                 {/* 3D Canvas */}
                 <HouseModel />
             </div>
