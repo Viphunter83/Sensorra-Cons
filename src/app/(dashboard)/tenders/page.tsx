@@ -39,6 +39,12 @@ export default async function TendersListPage() {
                         Tenders Found: {typedTenders.length}
                     </div>
                 </div>
+                <Button asChild>
+                    <Link href="/tenders/new">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Create New Tender
+                    </Link>
+                </Button>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

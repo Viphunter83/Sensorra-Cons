@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { BidComparisonTable } from "@/components/tenders/bid-comparison-table";
+import { PlaceBidDialog } from "@/components/tenders/place-bid-dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export default async function TenderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -79,7 +80,16 @@ export default async function TenderDetailsPage({ params }: { params: Promise<{ 
             {/* Scope */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Scope of Work</CardTitle>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Scope of Work</CardTitle>
+                        {!isOwner && (
+                            <PlaceBidDialog tenderId={tender.id} tenderTitle={tender.title} />
+                        )}
+                        {/* DEBUG: Allow owner to bid for testing */}
+                        {isOwner && (
+                            <PlaceBidDialog tenderId={tender.id} tenderTitle={tender.title} />
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="whitespace-pre-wrap text-sm leading-relaxed">
                     {tender.scope_of_work}

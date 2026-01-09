@@ -3,6 +3,37 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+export async function createTender(data: {
+    title: string,
+    scope_of_work: string,
+    budget_max: number,
+    property_id: string,
+    zone_tag?: string
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { data: tender, error } = await supabase
+        .from('tenders')
+        .insert({
+            owner_id: user.id,
+            title: data.title,
+            scope_of_work: data.scope_of_work,
+            budget_max: data.budget_max,
+            property_id: data.property_id,
+            zone_tag: data.zone_tag || 'General',
+            status: 'open'
+        })
+        .select()
+        .single()
+
+    if (error) throw new Error(error.message)
+
+    revalidatePath('/tenders')
+    return tender
+}
+
 export async function awardTender(tenderId: string, bidId: string) {
     const supabase = await createClient()
 

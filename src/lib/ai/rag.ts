@@ -19,11 +19,11 @@ export async function storeProjectContext(projectId: string, content: string) {
     const supabase = await createClient();
     const embedding = await generateEmbedding(content);
 
-    const { error } = await supabase.from('project_embeddings').insert({
+    const { error } = await supabase.from('project_embeddings').insert([{
         project_id: projectId,
         content,
-        embedding
-    });
+        embedding: embedding as any
+    }]);
 
     if (error) console.error('Error storing project context:', error);
 }
@@ -34,7 +34,7 @@ export async function retrieveContext(query: string, projectId?: string) {
 
     // 1. Search Global Knowledge Base
     const { data: globalContext } = await supabase.rpc('match_knowledge_base', {
-        query_embedding: embedding,
+        query_embedding: embedding as any,
         match_threshold: 0.5,
         match_count: 2
     });
@@ -44,7 +44,7 @@ export async function retrieveContext(query: string, projectId?: string) {
     // 2. Search Project Context (if applicable)
     if (projectId) {
         const { data: pContext } = await supabase.rpc('match_project_context', {
-            query_embedding: embedding,
+            query_embedding: embedding as any,
             target_project_id: projectId,
             match_threshold: 0.5,
             match_count: 3

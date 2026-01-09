@@ -175,10 +175,7 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                             <tr className="bg-muted/20">
                                 <td className="p-4"></td>
                                 {analysis.comparison_matrix.contractors.map((c: any, i: number) => {
-                                    const matchingBid = safeBids.find(b =>
-                                        ((b.profiles?.company_name || b.profiles?.full_name) === c.name)
-                                        || c.name.includes('Unknown') // Fallback match
-                                    )
+                                    const matchingBid = safeBids.find(b => b.id === c.bid_id)
                                     return (
                                         <td key={c.name + 'action'} className="p-4">
                                             {matchingBid && (
