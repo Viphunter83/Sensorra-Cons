@@ -439,6 +439,94 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
+      },
+      master_boq: {
+        Row: {
+          id: string
+          project_id: string
+          status: "draft" | "final" | "approved"
+          total_estimated_cost: number | null
+          currency: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          status?: "draft" | "final" | "approved"
+          total_estimated_cost?: number | null
+          currency?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          status?: "draft" | "final" | "approved"
+          total_estimated_cost?: number | null
+          currency?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_boq_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      boq_items: {
+        Row: {
+          id: string
+          master_boq_id: string
+          item_code: string | null
+          description: string
+          unit: string | null
+          quantity: number
+          estimated_rate: number | null
+          estimated_amount: number | null
+          category: string | null
+          specification_reference: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          master_boq_id: string
+          item_code?: string | null
+          description: string
+          unit?: string | null
+          quantity: number
+          estimated_rate?: number | null
+          estimated_amount?: number | null
+          category?: string | null
+          specification_reference?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          master_boq_id?: string
+          item_code?: string | null
+          description?: string
+          unit?: string | null
+          quantity?: number
+          estimated_rate?: number | null
+          estimated_amount?: number | null
+          category?: string | null
+          specification_reference?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_items_master_boq_id_fkey"
+            columns: ["master_boq_id"]
+            isOneToOne: false
+            referencedRelation: "master_boq"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

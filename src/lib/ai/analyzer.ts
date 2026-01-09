@@ -16,6 +16,20 @@ export type AIAnalysisResult = {
     materials?: string[];
 };
 
+export type BoQItem = {
+    item_code: string;
+    description: string;
+    unit: string;
+    quantity: number;
+    category: string;
+    specification?: string;
+};
+
+export type BoQResult = {
+    items: BoQItem[];
+    currency: string;
+};
+
 export async function analyzeDocument(content: string, isImage: boolean = false): Promise<AIAnalysisResult> {
 
     // If Text (PDF Parsed)
@@ -105,3 +119,57 @@ export async function analyzeDocument(content: string, isImage: boolean = false)
         throw error;
     }
 }
+
+export async function generateBoQ(content: string, isImage: boolean = false): Promise<BoQResult> {
+    const systemPrompt = `
+    You are a professional Quantity Surveyor.
+    Extract a Bill of Quantities (BoQ) from the provided construction document (blueprint or specifications).
+    
+    If the input is sparse/visual, estimate quantities based on standard architectural ratios for the identified rooms/elements.
+    
+    Return a JSON object:
+    {
+      "items": [
+        {
+          "item_code": "01.01",
+          "description": " Detailed description of item",
+          "unit": "sqm/m3/pcs/lm",
+          "quantity": number,
+          "category": "Concrete/Masonry/Finishes/MEP/etc",
+          "specification": "Reference to standard or specific specs"
+        }
+      ],
+      "currency": "AED"
+    }
+    `;
+
+    try {
+        let messages: any[] = [{ role: "system", content: systemPrompt }];
+
+        if (isImage) {
+            messages.push({
+                role: "user",
+                content: [
+                    { type: "text", text: "Create a Bill of Quantities from this blueprint." },
+                    { type: "image_url", image_url: { url: content } }
+                ]
+            });
+        } else {
+            messages.push({ role: "user", content: `Create a BoQ from this text:\n\n${content.slice(0, 20000)}` });
+        }
+
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: messages,
+            response_format: { type: "json_object" }
+        });
+
+        const result = JSON.parse(completion.choices[0].message.content || "{}") as BoQResult;
+        return result;
+
+    } catch (error) {
+        console.error("BoQ Generation Failed:", error);
+        return { items: [], currency: "AED" };
+    }
+}
+

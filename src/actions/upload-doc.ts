@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { analyzeDocument } from "@/lib/ai/analyzer";
+import { analyzeDocument, generateBoQ } from "@/lib/ai/analyzer";
 import { storeProjectContext } from "@/lib/ai/rag";
 import { revalidatePath } from "next/cache";
 // @ts-ignore
@@ -67,6 +67,7 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
     // 2. Parse Text
     let parsedText = "";
     let aiMetadata: any = {};
+    const isImage = file.type.startsWith('image/');
 
     try {
         log(`Starting Parsing for: ${file.name} Size: ${file.size}`);
@@ -86,21 +87,56 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
 
     // 3. AI Analysis
     // CASE A: Image (Vision Mode) - e.g. Blueprint
-    if (file.type.startsWith('image/')) {
+    if (isImage) {
         try {
             log("Sending to AI Vision...");
             if (!process.env.PROXY_API_KEY) throw new Error("Missing PROXY_API_KEY env var");
-
-            // Ideally we need a Public URL. For strict RLS this is hard.
-            // WORKAROUND: We will skip Vision execution if we can't easily get a public URL from here in this setup.
-            // BUT for the demo, let's assume valid URL generation or pass a placeholder text description.
-            // BETTER: Use the `getPublicUrl` from Supabase if bucket is public.
 
             const { data: publicUrlData } = supabase.storage.from("sensorra-assets").getPublicUrl(filePath);
 
             if (publicUrlData.publicUrl) {
                 aiMetadata = await analyzeDocument(publicUrlData.publicUrl, true);
                 log("AI Vision result: Success");
+
+                // --- PHASE I: MASTER BOQ GENERATION ---
+                // If it's a blueprint and part of a project, generate BoQ
+                if (projectId && aiMetadata.doc_type === 'blueprint') {
+                    log("Generating Master BoQ from Blueprint...");
+                    const boqResult = await generateBoQ(publicUrlData.publicUrl, true);
+
+                    if (boqResult.items.length > 0) {
+                        // 1. Create Master BoQ Record
+                        const { data: masterBoq, error: mBoqErr } = await supabase
+                            .from('master_boq')
+                            .insert({
+                                project_id: projectId,
+                                status: 'draft',
+                                currency: boqResult.currency
+                            })
+                            .select()
+                            .single();
+
+                        if (!mBoqErr && masterBoq) {
+                            // 2. Insert Items
+                            const itemsToInsert = boqResult.items.map(item => ({
+                                master_boq_id: masterBoq.id,
+                                description: item.description,
+                                unit: item.unit,
+                                quantity: item.quantity,
+                                category: item.category,
+                                item_code: item.item_code,
+                                specification_reference: item.specification
+                            }));
+
+                            const { error: itemsErr } = await supabase.from('boq_items').insert(itemsToInsert);
+                            if (itemsErr) log(`Error inserting BoQ items: ${itemsErr.message}`);
+                            else log(`Successfully created Master BoQ with ${itemsToInsert.length} items.`);
+                        } else {
+                            log(`Error creating Master BoQ: ${mBoqErr?.message}`);
+                        }
+                    }
+                }
+                // --------------------------------------
             }
 
         } catch (err: any) {
@@ -121,6 +157,39 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
             if (projectId && !aiMetadata.error) {
                 await storeProjectContext(projectId, parsedText);
                 log("RAG Context Stored");
+
+                // --- PHASE I: MASTER BOQ GENERATION (Text) ---
+                if (aiMetadata.doc_type === 'blueprint' || aiMetadata.doc_type === 'contract') { // contracts/specs can have BoQ
+                    log("Generating Master BoQ from Text...");
+                    const boqResult = await generateBoQ(parsedText, false);
+
+                    if (boqResult.items.length > 0) {
+                        const { data: masterBoq, error: mBoqErr } = await supabase
+                            .from('master_boq')
+                            .insert({
+                                project_id: projectId,
+                                status: 'draft',
+                                currency: boqResult.currency
+                            })
+                            .select()
+                            .single();
+
+                        if (!mBoqErr && masterBoq) {
+                            const itemsToInsert = boqResult.items.map(item => ({
+                                master_boq_id: masterBoq.id,
+                                description: item.description,
+                                unit: item.unit,
+                                quantity: item.quantity,
+                                category: item.category,
+                                item_code: item.item_code,
+                                specification_reference: item.specification
+                            }));
+                            await supabase.from('boq_items').insert(itemsToInsert);
+                            log(`Successfully created Master BoQ from text with ${itemsToInsert.length} items.`);
+                        }
+                    }
+                }
+                // ---------------------------------------------
             }
 
         } catch (err: any) {
