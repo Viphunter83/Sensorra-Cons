@@ -173,3 +173,40 @@ export async function generateBoQ(content: string, isImage: boolean = false): Pr
     }
 }
 
+export async function matchBidItems(
+    bidItems: BoQItem[],
+    masterItems: { id: string; description: string; quantity: number }[]
+): Promise<{ bidItemIndex: number; masterItemId: string | null; confidence: number }[]> {
+    const systemPrompt = `
+    Match the Contractor's Bid Items to the Master BoQ Items.
+    
+    Master Items:
+    ${JSON.stringify(masterItems.map(m => ({ id: m.id, desc: m.description, qty: m.quantity })))}
+    
+    Bid Items:
+    ${JSON.stringify(bidItems.map((b, i) => ({ index: i, desc: b.description, qty: b.quantity })))}
+    
+    Return a JSON object with a key "mappings" containing an array:
+    {
+      "mappings": [
+        { "bidItemIndex": 0, "masterItemId": "uuid-here", "confidence": 0.95 },
+        { "bidItemIndex": 1, "masterItemId": null, "confidence": 0.1 } 
+      ]
+    }
+    `;
+
+    try {
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [{ role: "system", content: systemPrompt }],
+            response_format: { type: "json_object" }
+        });
+
+        const result = JSON.parse(completion.choices[0].message.content || "{ \"mappings\": [] }");
+        return result.mappings || [];
+    } catch (error) {
+        console.error("Smart Matching Failed:", error);
+        return [];
+    }
+}
+

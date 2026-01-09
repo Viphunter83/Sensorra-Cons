@@ -6,6 +6,10 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type UserRole = "owner" | "manager" | "contractor" | "viewer" | "architect" | "consultant" | "inspector";
+export type DocStatus = "processing" | "active" | "archived" | "rejected";
+export type TenderStatus = "draft" | "open" | "review" | "awarded" | "closed";
+
 export type Database = {
   public: {
     Tables: {
@@ -113,7 +117,7 @@ export type Database = {
           file_url: string
           version: number | null
           ai_metadata: Json | null
-          status: Database["public"]["Enums"]["doc_status"] | null
+          status: DocStatus | null
           created_at: string | null
         }
         Insert: {
@@ -125,7 +129,7 @@ export type Database = {
           file_url: string
           version?: number | null
           ai_metadata?: Json | null
-          status?: Database["public"]["Enums"]["doc_status"] | null
+          status?: DocStatus | null
           created_at?: string | null
         }
         Update: {
@@ -137,7 +141,7 @@ export type Database = {
           file_url?: string
           version?: number | null
           ai_metadata?: Json | null
-          status?: Database["public"]["Enums"]["doc_status"] | null
+          status?: DocStatus | null
           created_at?: string | null
         }
         Relationships: [
@@ -160,6 +164,60 @@ export type Database = {
             columns: ["uploader_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      bid_items: {
+        Row: {
+          id: string
+          bid_id: string
+          master_item_id: string | null
+          description: string
+          unit: string | null
+          quantity: number
+          unit_price: number | null
+          total_price: number | null
+          notes: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          bid_id: string
+          master_item_id?: string | null
+          description: string
+          unit?: string | null
+          quantity: number
+          unit_price?: number | null
+          total_price?: number | null
+          notes?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          bid_id?: string
+          master_item_id?: string | null
+          description?: string
+          unit?: string | null
+          quantity?: number
+          unit_price?: number | null
+          total_price?: number | null
+          notes?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_items_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_items_master_item_id_fkey"
+            columns: ["master_item_id"]
+            isOneToOne: false
+            referencedRelation: "boq_items"
             referencedColumns: ["id"]
           }
         ]
@@ -311,7 +369,7 @@ export type Database = {
           id: string
           full_name: string | null
           company_name: string | null
-          role: Database["public"]["Enums"]["user_role"] | null
+          role: UserRole | null
           avatar_url: string | null
           created_at: string | null
         }
@@ -319,7 +377,7 @@ export type Database = {
           id: string
           full_name?: string | null
           company_name?: string | null
-          role?: Database["public"]["Enums"]["user_role"] | null
+          role?: UserRole | null
           avatar_url?: string | null
           created_at?: string | null
         }
@@ -327,7 +385,7 @@ export type Database = {
           id?: string
           full_name?: string | null
           company_name?: string | null
-          role?: Database["public"]["Enums"]["user_role"] | null
+          role?: UserRole | null
           avatar_url?: string | null
           created_at?: string | null
         }
@@ -388,7 +446,7 @@ export type Database = {
           scope_of_work: string | null
           budget_max: number | null
           zone_tag: string | null
-          status: Database["public"]["Enums"]["tender_status"] | null
+          status: TenderStatus | null
           project_id: string | null
           created_at: string | null
         }
@@ -400,7 +458,7 @@ export type Database = {
           scope_of_work?: string | null
           budget_max?: number | null
           zone_tag?: string | null
-          status?: Database["public"]["Enums"]["tender_status"] | null
+          status?: TenderStatus | null
           project_id?: string | null
           created_at?: string | null
         }
@@ -412,7 +470,7 @@ export type Database = {
           scope_of_work?: string | null
           budget_max?: number | null
           zone_tag?: string | null
-          status?: Database["public"]["Enums"]["tender_status"] | null
+          status?: TenderStatus | null
           project_id?: string | null
           created_at?: string | null
         }
@@ -439,7 +497,7 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
-      },
+      }
       master_boq: {
         Row: {
           id: string
@@ -477,7 +535,7 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
-      },
+      }
       boq_items: {
         Row: {
           id: string
@@ -562,9 +620,9 @@ export type Database = {
       }
     }
     Enums: {
-      user_role: "owner" | "manager" | "contractor" | "viewer" | "architect" | "consultant" | "inspector"
-      doc_status: "processing" | "active" | "archived" | "rejected"
-      tender_status: "draft" | "open" | "review" | "awarded" | "closed"
+      user_role: UserRole
+      doc_status: DocStatus
+      tender_status: TenderStatus
     }
   }
 }

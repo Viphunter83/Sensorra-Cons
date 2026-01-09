@@ -24,7 +24,7 @@ export default async function DashboardPage() {
     const { data: documents } = await supabase
         .from("documents")
         .select("*")
-        .eq("property_id", property?.id || "")
+        .eq("property_id", (property as any)?.id || "")
         .order("created_at", { ascending: false });
 
     return (
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
                                     Navigate through rooms and find localized documents instantly.
                                 </p>
                                 <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white border-0 font-medium" asChild>
-                                    <Link href={`/property/${property.id}`}>
+                                    <Link href={`/property/${(property as any).id}`}>
                                         Launch 3D Viewer
                                     </Link>
                                 </Button>
@@ -62,14 +62,14 @@ export default async function DashboardPage() {
                         {/* Property & Upload Card */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>{property.title}</CardTitle>
+                                <CardTitle>{(property as any).title}</CardTitle>
                                 <CardDescription>Manage your construction documents</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-muted-foreground mb-4">
                                     Upload contracts, invoices, or blueprints to automatically analyze them with AI.
                                 </p>
-                                <SmartUploader propertyId={property.id} />
+                                <SmartUploader propertyId={(property as any).id} />
                             </CardContent>
                         </Card>
                     </div>
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
                             <CardContent>
                                 <ScrollArea className="h-[400px] w-full pr-4">
                                     <div className="space-y-4">
-                                        {documents?.map((doc) => (
+                                        {(documents as any[])?.map((doc) => (
                                             <div key={doc.id} className="flex items-start justify-between p-4 border rounded-lg bg-card hover:bg-accent/10 transition-colors">
                                                 <div className="flex gap-3">
                                                     <div className="p-2 bg-primary/10 rounded-md h-fit">

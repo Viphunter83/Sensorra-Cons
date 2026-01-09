@@ -34,7 +34,7 @@ export async function createTender({ propertyId, zone, userRequest, projectId }:
             .eq('id', projectId)
             .single()
 
-        if (project && project.status === 'permitting') {
+        if (project && (project as any).status === 'permitting') {
             // Check for approved permit
             const { data: permit } = await supabase
                 .from('permits')
@@ -109,7 +109,7 @@ export async function createTender({ propertyId, zone, userRequest, projectId }:
             zone_tag: zone,
             status: 'open',
             project_id: projectId || null
-        })
+        } as any)
         .select()
         .single()
 
@@ -119,5 +119,5 @@ export async function createTender({ propertyId, zone, userRequest, projectId }:
     }
 
     revalidatePath('/dashboard')
-    return { success: true, tenderId: data.id }
+    return { success: true, tenderId: (data as any).id }
 }

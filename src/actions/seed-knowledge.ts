@@ -44,8 +44,8 @@ export async function seedKnowledgeBase() {
             const { error } = await supabase.from('knowledge_base').insert([{
                 content: rule,
                 embedding: embedding as any, // Cast to any to avoid strict vector type issues
-                metadata: { source: "Dubai Building Code 2024 (Simulated)" }
-            }]);
+                metadata: { source: 'seed_script' }
+            }] as any);
 
             if (error) {
                 console.error("Error inserting rule:", rule, error);

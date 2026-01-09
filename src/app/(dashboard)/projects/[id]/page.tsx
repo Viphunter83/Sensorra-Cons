@@ -34,8 +34,8 @@ export default async function ProjectPage({ params }: { params: { id: string } }
                             Back to Projects
                         </Button>
                     </Link>
-                    <h1 className="text-3xl font-bold tracking-tight">{project.title}</h1>
-                    <p className="text-muted-foreground">{project.properties?.title}</p>
+                    <h1 className="text-3xl font-bold tracking-tight">{(project as any).title}</h1>
+                    <p className="text-muted-foreground">{(project as any).properties?.title}</p>
                 </div>
 
                 <Tabs defaultValue="permits" className="space-y-4">
@@ -50,11 +50,11 @@ export default async function ProjectPage({ params }: { params: { id: string } }
                     </TabsContent>
 
                     <TabsContent value="permits">
-                        <ProjectPermits projectId={project.id} propertyId={project.property_id} />
+                        <ProjectPermits projectId={(project as any).id} propertyId={(project as any).property_id} />
                     </TabsContent>
 
                     <TabsContent value="boq">
-                        <MasterBoQView projectId={project.id} />
+                        <MasterBoQView projectId={(project as any).id} />
                     </TabsContent>
                 </Tabs>
             </main>

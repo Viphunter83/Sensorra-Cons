@@ -23,7 +23,7 @@ export async function storeProjectContext(projectId: string, content: string) {
         project_id: projectId,
         content,
         embedding: embedding as any
-    }]);
+    }] as any);
 
     if (error) console.error('Error storing project context:', error);
 }
@@ -37,7 +37,7 @@ export async function retrieveContext(query: string, projectId?: string) {
         query_embedding: embedding as any,
         match_threshold: 0.5,
         match_count: 2
-    });
+    } as any);
 
     let projectContext: any[] = [];
 
@@ -48,12 +48,12 @@ export async function retrieveContext(query: string, projectId?: string) {
             target_project_id: projectId,
             match_threshold: 0.5,
             match_count: 3
-        });
+        } as any);
         projectContext = pContext || [];
     }
 
     return {
-        global: globalContext?.map((c: any) => c.content).join('\n') || '',
-        project: projectContext?.map((c: any) => c.content).join('\n') || ''
+        global: (globalContext as unknown as any[])?.map((c: any) => c.content).join('\n') || '',
+        project: (projectContext as unknown as any[])?.map((c: any) => c.content).join('\n') || ''
     };
 }

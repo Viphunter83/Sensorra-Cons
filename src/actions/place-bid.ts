@@ -24,7 +24,7 @@ export async function placeBid({ tenderId, price, comment, proposalText }: Place
             price,
             comment,
             proposal_text: proposalText
-        })
+        } as any)
 
     if (error) {
         console.error('Bid Error:', error)

@@ -117,14 +117,14 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
                                 project_id: projectId,
                                 status: 'draft',
                                 currency: boqResult.currency
-                            })
+                            } as any)
                             .select()
                             .single();
 
                         if (!mBoqErr && masterBoq) {
                             // 2. Insert Items
                             const itemsToInsert = boqResult.items.map(item => ({
-                                master_boq_id: masterBoq.id,
+                                master_boq_id: (masterBoq as any).id,
                                 description: item.description,
                                 unit: item.unit,
                                 quantity: item.quantity,
@@ -133,7 +133,7 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
                                 specification_reference: item.specification
                             }));
 
-                            const { error: itemsErr } = await supabase.from('boq_items').insert(itemsToInsert);
+                            const { error: itemsErr } = await (supabase.from('boq_items') as any).insert(itemsToInsert);
                             if (itemsErr) log(`Error inserting BoQ items: ${itemsErr.message}`);
                             else log(`Successfully created Master BoQ with ${itemsToInsert.length} items.`);
                         } else {
@@ -202,13 +202,13 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
                                 project_id: projectId,
                                 status: 'draft',
                                 currency: boqResult.currency
-                            })
+                            } as any)
                             .select()
                             .single();
 
                         if (!mBoqErr && masterBoq) {
                             const itemsToInsert = boqResult.items.map(item => ({
-                                master_boq_id: masterBoq.id,
+                                master_boq_id: (masterBoq as any).id,
                                 description: item.description,
                                 unit: item.unit,
                                 quantity: item.quantity,
@@ -216,7 +216,7 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
                                 item_code: item.item_code,
                                 specification_reference: item.specification
                             }));
-                            await supabase.from('boq_items').insert(itemsToInsert);
+                            await (supabase.from('boq_items') as any).insert(itemsToInsert);
                             log(`Successfully created Master BoQ from text with ${itemsToInsert.length} items.`);
                         }
                     }
@@ -244,7 +244,7 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
             file_url: filePath,
             status: aiMetadata.error || (itemsDocType === 'permit' && !(aiMetadata as any).is_approved) ? "rejected" : "active",
             ai_metadata: aiMetadata,
-        })
+        } as any)
         .select()
         .single();
 
@@ -256,8 +256,8 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
                 project_id: projectId,
                 authority: (customMetadata as any).authority,
                 status: (aiMetadata as any).is_approved ? 'approved' : 'rejected',
-                approval_doc_id: docData.id
-            }, { onConflict: 'project_id, authority' }); // Needs unique constraint or logic adjustment.
+                approval_doc_id: (docData as any).id
+            } as any, { onConflict: 'project_id, authority' }); // Needs unique constraint or logic adjustment.
         // NOTE: The current schema implies multiple permits per project.
         // If we want one per authority, we should probably check existence.
         // For now, let's just insert/update based on logic or assume unique index is needed manually or just append.
@@ -266,16 +266,16 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
 
         const { data: existingPermit } = await supabase.from('permits').select('id').eq('project_id', projectId).eq('authority', (customMetadata as any).authority).single();
         if (existingPermit) {
-            await supabase.from('permits').update({
+            await (supabase.from('permits') as any).update({
                 status: (aiMetadata as any).is_approved ? 'approved' : 'rejected',
-                approval_doc_id: docData.id
-            }).eq('id', existingPermit.id);
+                approval_doc_id: (docData as any).id
+            }).eq('id', (existingPermit as any).id);
         } else {
-            await supabase.from('permits').insert({
+            await (supabase.from('permits') as any).insert({
                 project_id: projectId,
                 authority: (customMetadata as any).authority,
                 status: (aiMetadata as any).is_approved ? 'approved' : 'rejected',
-                approval_doc_id: docData.id
+                approval_doc_id: (docData as any).id
             });
         }
     }
@@ -286,5 +286,5 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
     }
 
     revalidatePath("/(dashboard)", "layout");
-    return { success: true, document: docData };
+    return { success: true, document: docData as any };
 }

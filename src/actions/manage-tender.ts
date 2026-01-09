@@ -26,7 +26,7 @@ export async function createTender(data: {
             project_id: data.project_id,
             zone_tag: data.zone_tag || 'General',
             status: 'open'
-        })
+        } as any)
         .select()
         .single()
 
@@ -50,13 +50,13 @@ export async function awardTender(tenderId: string, bidId: string) {
         .eq('id', tenderId)
         .single()
 
-    if (!tender || tender.owner_id !== user.id) {
+    if (!tender || (tender as any).owner_id !== user.id) {
         throw new Error('You can only award your own tenders')
     }
 
     // 2. Update Tender
-    const { error } = await supabase
-        .from('tenders')
+    const { error } = await (supabase
+        .from('tenders') as any)
         .update({
             status: 'awarded',
             winning_bid_id: bidId
@@ -66,7 +66,8 @@ export async function awardTender(tenderId: string, bidId: string) {
     if (error) throw new Error('Failed to award tender')
 
     // 3. Create Audit Log (Notification)
-    await supabase.from('audit_logs').insert({
+    // 3. Create Audit Log (Notification)
+    await (supabase.from('audit_logs') as any).insert({
         user_id: user.id,
         action: 'TENDER_AWARDED',
         entity_id: tenderId,

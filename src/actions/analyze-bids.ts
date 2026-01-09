@@ -42,7 +42,7 @@ export async function analyzeBids(tenderId: string): Promise<AnalysisResult> {
   }
 
   // 2. Prepare Prompt
-  const bidsText = bids.map((b, i) => `
+  const bidsText = (bids as any[]).map((b, i) => `
     Bid ${i + 1} (ID: ${b.id}):
     Contractor: ${(b.profiles as any)?.company_name || (b.profiles as any)?.full_name || 'Unknown'}
     Price: ${b.price} AED
@@ -50,8 +50,8 @@ export async function analyzeBids(tenderId: string): Promise<AnalysisResult> {
   `).join('\n')
 
   const systemPrompt = `You are a Senior Quantity Surveyor (Construction Expert).
-  Goal: Compare bids for the scope: "${tender.scope_of_work}".
-  Budget Max: ${tender.budget_max} AED.
+  Goal: Compare bids for the scope: "${(tender as any).scope_of_work}".
+  Budget Max: ${(tender as any).budget_max} AED.
 
   Bids:
   ${bidsText}
