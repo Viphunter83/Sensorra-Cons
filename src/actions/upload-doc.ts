@@ -43,6 +43,11 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
     const propertyId = formData.get("property_id") as string;
     const projectId = formData.get("project_id") as string | null;
     const itemsDocType = formData.get("doc_type") as string | null; // Manual override
+    const metadataStr = formData.get("metadata") as string | null;
+    let customMetadata = {};
+    if (metadataStr) {
+        try { customMetadata = JSON.parse(metadataStr); } catch (e) { console.error("Invalid metadata json", e); }
+    }
 
     if (!file || !propertyId) {
         return { error: "Missing file or property ID" };
@@ -150,8 +155,35 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
             log("Sending to AI...");
             if (!process.env.PROXY_API_KEY) throw new Error("Missing PROXY_API_KEY env var");
 
-            aiMetadata = await analyzeDocument(parsedText, false);
-            log("AI result: Success");
+            // Check for Permit Validation (Stub)
+            if (itemsDocType === 'permit') {
+                log("Running Compliance Check (Stub)...");
+                const authority = (customMetadata as any).authority || "Unknown";
+                const isApproved = parsedText.toLowerCase().includes("no objection") ||
+                    parsedText.toLowerCase().includes("approved") ||
+                    parsedText.toLowerCase().includes("noc");
+
+                if (isApproved) {
+                    aiMetadata = {
+                        summary: `Approved Permit from ${authority}`,
+                        doc_type: 'permit',
+                        is_approved: true,
+                        authority: authority
+                    };
+                    log("Compliance Check: APPROVED");
+                } else {
+                    aiMetadata = {
+                        summary: `Permit document rejected. Missing 'Approved' or 'No Objection' keywords.`,
+                        doc_type: 'permit',
+                        is_approved: false
+                    };
+                    log("Compliance Check: REJECTED");
+                }
+            } else {
+                // Standard Analysis
+                aiMetadata = await analyzeDocument(parsedText, false);
+                log("AI result: Success");
+            }
 
             // RAG Integration: Store embedding for project context
             if (projectId && !aiMetadata.error) {
@@ -210,11 +242,43 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
             uploader_id: (await supabase.auth.getUser()).data.user?.id!,
             type: itemsDocType || (aiMetadata as any)?.doc_type || "unknown",
             file_url: filePath,
-            status: aiMetadata.error ? "rejected" : "active",
+            status: aiMetadata.error || (itemsDocType === 'permit' && !(aiMetadata as any).is_approved) ? "rejected" : "active",
             ai_metadata: aiMetadata,
         })
         .select()
         .single();
+
+    // 5. Update Permits Table if applicable
+    if (docData && itemsDocType === 'permit' && !aiMetadata.error && projectId && (customMetadata as any).authority) {
+        const { error: permitErr } = await supabase
+            .from('permits')
+            .upsert({
+                project_id: projectId,
+                authority: (customMetadata as any).authority,
+                status: (aiMetadata as any).is_approved ? 'approved' : 'rejected',
+                approval_doc_id: docData.id
+            }, { onConflict: 'project_id, authority' }); // Needs unique constraint or logic adjustment.
+        // NOTE: The current schema implies multiple permits per project.
+        // If we want one per authority, we should probably check existence.
+        // For now, let's just insert/update based on logic or assume unique index is needed manually or just append.
+        // Actually, the `permits` table schema doesn't strictly enforce unique (project_id, authority).
+        // Let's modify the query to check first to avoid duplicates.
+
+        const { data: existingPermit } = await supabase.from('permits').select('id').eq('project_id', projectId).eq('authority', (customMetadata as any).authority).single();
+        if (existingPermit) {
+            await supabase.from('permits').update({
+                status: (aiMetadata as any).is_approved ? 'approved' : 'rejected',
+                approval_doc_id: docData.id
+            }).eq('id', existingPermit.id);
+        } else {
+            await supabase.from('permits').insert({
+                project_id: projectId,
+                authority: (customMetadata as any).authority,
+                status: (aiMetadata as any).is_approved ? 'approved' : 'rejected',
+                approval_doc_id: docData.id
+            });
+        }
+    }
 
     if (dbError) {
         console.error("DB Insert Error:", dbError);

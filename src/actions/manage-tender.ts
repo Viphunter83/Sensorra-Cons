@@ -8,6 +8,7 @@ export async function createTender(data: {
     scope_of_work: string,
     budget_max: number,
     property_id: string,
+    project_id?: string,
     zone_tag?: string
 }) {
     const supabase = await createClient()
@@ -22,6 +23,7 @@ export async function createTender(data: {
             scope_of_work: data.scope_of_work,
             budget_max: data.budget_max,
             property_id: data.property_id,
+            project_id: data.project_id,
             zone_tag: data.zone_tag || 'General',
             status: 'open'
         })
