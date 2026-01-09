@@ -66,10 +66,16 @@ export async function generateRoomDesign(prompt: string): Promise<DreamResult> {
                 .select('*')
                 .ilike('name', `%${q}%`)
                 .not('model_url', 'is', null) // Ensure we only get items with 3D models
-                .limit(1); // Just grab the first match for now ("I'm feeling lucky")
+                .limit(1);
+
+            console.log(`[DreamEngine] Query: ${q}, Found:`, data?.length); // DEBUG
+            const item = data?.[0] as any; // Cast to any because TS types are outdated
+            if (item) console.log(`[DreamEngine] Item:`, item.name, item.model_url); // DEBUG
+
             return data?.[0] as DreamCatalogItem | undefined;
         })
     );
+    console.log(`[DreamEngine] Found items count:`, foundItems.filter(Boolean).length); // DEBUG
 
     // 3. Arrange Items in Space ("The Reality Anchor")
     let zOffset = 0;
