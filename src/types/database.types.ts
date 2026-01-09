@@ -44,6 +44,65 @@ export type Database = {
           }
         ]
       }
+      knowledge_base: {
+        Row: {
+          id: string
+          content: string
+          embedding: string | number[] | null // Vector is usually string in JS client or mapped
+          metadata: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          content: string
+          embedding?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          content?: string
+          embedding?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      project_embeddings: {
+        Row: {
+          id: string
+          project_id: string
+          content: string
+          embedding: string | number[] | null
+          metadata: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          content: string
+          embedding?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          content?: string
+          embedding?: string | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_embeddings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       documents: {
         Row: {
           id: string
@@ -101,6 +160,64 @@ export type Database = {
             columns: ["uploader_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      bids: {
+        Row: {
+          id: string
+          tender_id: string
+          contractor_id: string
+          price: number
+          comment: string
+          proposal_text: string | null
+          project_id: string | null
+          status: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          tender_id: string
+          contractor_id: string
+          price: number
+          comment: string
+          proposal_text?: string | null
+          project_id?: string | null
+          status?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          tender_id?: string
+          contractor_id?: string
+          price?: number
+          comment?: string
+          proposal_text?: string | null
+          project_id?: string | null
+          status?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_tender_id_fkey"
+            columns: ["tender_id"]
+            isOneToOne: false
+            referencedRelation: "tenders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bids_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           }
         ]
@@ -328,7 +445,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_knowledge_base: {
+        Args: {
+          query_embedding: string
+          match_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: string
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      match_project_context: {
+        Args: {
+          query_embedding: string
+          target_project_id: string
+          match_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: string
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       user_role: "owner" | "manager" | "contractor" | "viewer" | "architect" | "consultant" | "inspector"

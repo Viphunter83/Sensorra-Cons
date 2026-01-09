@@ -7,9 +7,10 @@ interface PlaceBidParams {
     tenderId: string
     price: number
     comment: string
+    proposalText?: string
 }
 
-export async function placeBid({ tenderId, price, comment }: PlaceBidParams) {
+export async function placeBid({ tenderId, price, comment, proposalText }: PlaceBidParams) {
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -21,7 +22,8 @@ export async function placeBid({ tenderId, price, comment }: PlaceBidParams) {
             tender_id: tenderId,
             contractor_id: user.id,
             price,
-            comment
+            comment,
+            proposal_text: proposalText
         })
 
     if (error) {

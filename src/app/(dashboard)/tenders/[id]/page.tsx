@@ -19,7 +19,7 @@ export default async function TenderDetailsPage({ params }: { params: Promise<{ 
     const { data: bidsData, error: bidsError } = await supabase
         .from("bids")
         .select(`
-            id, price, comment, created_at,
+            id, price, comment, created_at, proposal_text, project_id,
             profiles (full_name, company_name)
         `)
         .eq("tender_id", id);

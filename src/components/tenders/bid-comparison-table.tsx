@@ -7,6 +7,7 @@ import { analyzeBids } from '@/actions/analyze-bids'
 import { awardTender } from '@/actions/manage-tender'
 import { Loader2, Trophy, Check, X, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { BidAuditor } from './bid-auditor'
 
 interface BidComparisonProps {
     tenderId: string
@@ -181,19 +182,30 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                                     return (
                                         <td key={c.name + 'action'} className="p-4">
                                             {matchingBid && (
-                                                <Button
-                                                    size="sm"
-                                                    className="w-full"
-                                                    variant={awarding === matchingBid.id ? 'secondary' : 'default'}
-                                                    disabled={!!awarding}
-                                                    onClick={() => handleAward(matchingBid.id)}
-                                                >
-                                                    {awarding === matchingBid.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        'Award Contract'
+                                                <div className="space-y-2">
+                                                    <Button
+                                                        size="sm"
+                                                        className="w-full"
+                                                        variant={awarding === matchingBid.id ? 'secondary' : 'default'}
+                                                        disabled={!!awarding}
+                                                        onClick={() => handleAward(matchingBid.id)}
+                                                    >
+                                                        {awarding === matchingBid.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            'Award Contract'
+                                                        )}
+                                                    </Button>
+
+                                                    {matchingBid.proposal_text && (
+                                                        <div className="w-full">
+                                                            <BidAuditor
+                                                                estimateText={matchingBid.proposal_text}
+                                                                projectId={(matchingBid as any).project_id}
+                                                            />
+                                                        </div>
                                                     )}
-                                                </Button>
+                                                </div>
                                             )}
                                         </td>
                                     )

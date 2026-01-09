@@ -12,6 +12,7 @@ export function PlaceBidDialog({ tenderId, tenderTitle }: { tenderId: string, te
     const [open, setOpen] = useState(false)
     const [price, setPrice] = useState('')
     const [comment, setComment] = useState('')
+    const [proposalText, setProposalText] = useState('')
     const [loading, setLoading] = useState(false)
     const [done, setDone] = useState(false)
 
@@ -21,7 +22,8 @@ export function PlaceBidDialog({ tenderId, tenderTitle }: { tenderId: string, te
             await placeBid({
                 tenderId,
                 price: Number(price),
-                comment
+                comment,
+                proposalText
             })
             setDone(true)
             setTimeout(() => {
@@ -29,6 +31,7 @@ export function PlaceBidDialog({ tenderId, tenderTitle }: { tenderId: string, te
                 setDone(false)
                 setPrice('')
                 setComment('')
+                setProposalText('')
             }, 2000)
         } catch (e) {
             console.error(e)
@@ -59,11 +62,20 @@ export function PlaceBidDialog({ tenderId, tenderTitle }: { tenderId: string, te
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Proposal / Comment</label>
+                            <label className="text-sm font-medium">Cover Letter / Comment</label>
                             <Textarea
                                 placeholder="I can start tomorrow..."
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Full Proposal Text (for AI Audit)</label>
+                            <Textarea
+                                placeholder="Paste the full text of your technical proposal here..."
+                                value={proposalText}
+                                onChange={(e) => setProposalText(e.target.value)}
+                                className="h-32"
                             />
                         </div>
                         <Button className="w-full" onClick={handleSubmit} disabled={loading || !price}>
