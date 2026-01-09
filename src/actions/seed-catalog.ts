@@ -4,7 +4,8 @@ import { createClient } from '@/utils/supabase/server';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
+    apiKey: process.env.PROXY_API_KEY!,
+    baseURL: process.env.PROXY_BASE_URL,
 });
 
 const SAMPLE_ITEMS = [

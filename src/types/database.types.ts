@@ -585,15 +585,136 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
+      },
+      spaces: {
+        Row: {
+          id: string
+          project_id: string
+          name: string
+          dimensions: Json // { l, w, h }
+          model_url: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          name: string
+          dimensions?: Json
+          model_url?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          name?: string
+          dimensions?: Json
+          model_url?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spaces_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      catalog_items: {
+        Row: {
+          id: string
+          name: string
+          category: string
+          price: number
+          currency: string
+          dimensions: Json
+          image_url: string
+          embedding: string | number[] | null
+          metadata: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          category: string
+          price: number
+          currency: string
+          dimensions?: Json
+          image_url: string
+          embedding?: string | number[] | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          category?: string
+          price?: number
+          currency?: string
+          dimensions?: Json
+          image_url?: string
+          embedding?: string | number[] | null
+          metadata?: Json | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      design_boards: {
+        Row: {
+          id: string
+          space_id: string
+          items: Json // Array of placed items
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          space_id: string
+          items?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          space_id?: string
+          items?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_boards_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      search_catalog_items: {
+        Args: {
+          query_embedding: string | number[]
+          match_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: string
+          name: string
+          description: string
+          price: number
+          image_url: string
+          similarity: number
+        }[]
+      }
       match_knowledge_base: {
         Args: {
-          query_embedding: string
+          query_embedding: string | number[]
           match_threshold: number
           match_count: number
         }
@@ -606,7 +727,7 @@ export type Database = {
       }
       match_project_context: {
         Args: {
-          query_embedding: string
+          query_embedding: string | number[]
           target_project_id: string
           match_threshold: number
           match_count: number
@@ -619,10 +740,6 @@ export type Database = {
         }[]
       }
     }
-    Enums: {
-      user_role: UserRole
-      doc_status: DocStatus
-      tender_status: TenderStatus
-    }
   }
+}
 }

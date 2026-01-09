@@ -27,7 +27,7 @@ export async function createDefaultSpace(projectId: string) {
         .single();
 
     if (error) throw error;
-    revalidatePath(`/projects/${projectId}/design`);
+    // revalidatePath(`/projects/${projectId}/design`); // Removed to allow server-side calls during render
     return data;
 }
 

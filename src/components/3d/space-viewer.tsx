@@ -34,14 +34,12 @@ interface SpaceViewerProps {
     isDesignMode?: boolean;
 }
 
-function RoomModel({ url, dimensions }: { url?: string | null; dimensions: { l: number; w: number; h: number } }) {
-    const { scene } = useGLTF(url || ''); // Will fail if empty, need handling
+function GLTFRoom({ url }: { url: string }) {
+    const { scene } = useGLTF(url);
+    return <primitive object={scene} />;
+}
 
-    if (url) {
-        return <primitive object={scene} />;
-    }
-
-    // Fallback: Wireframe room box
+function DefaultRoom({ dimensions }: { dimensions: { l: number; w: number; h: number } }) {
     return (
         <mesh position={[0, dimensions.h / 2, 0]}>
             <boxGeometry args={[dimensions.l, dimensions.h, dimensions.w]} />
@@ -49,6 +47,13 @@ function RoomModel({ url, dimensions }: { url?: string | null; dimensions: { l: 
             <gridHelper args={[Math.max(dimensions.l, dimensions.w), 10]} position={[0, -dimensions.h / 2 + 0.01, 0]} />
         </mesh>
     );
+}
+
+function RoomModel({ url, dimensions }: { url?: string | null; dimensions: { l: number; w: number; h: number } }) {
+    if (url) {
+        return <GLTFRoom url={url} />;
+    }
+    return <DefaultRoom dimensions={dimensions} />;
 }
 
 function FurnitureItem({
