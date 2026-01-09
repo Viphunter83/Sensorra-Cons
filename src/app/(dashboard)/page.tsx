@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Calendar, DollarSign, Tag, Box } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { DemoSeedButton } from "@/components/dashboard/demo-seed-button";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -144,8 +145,9 @@ export default async function DashboardPage() {
                 </div>
             ) : (
                 <div className="p-8 text-center border rounded-lg bg-yellow-50 text-yellow-800">
-                    <h3 className="font-bold text-lg">No Property Found</h3>
-                    <p>Please contact an administrator to assign a property to your account.</p>
+                    <h3 className="font-bold text-lg mb-4">No Property Found</h3>
+                    <p className="mb-6">You don't have any properties linked to your account yet.</p>
+                    <DemoSeedButton />
                 </div>
             )}
         </div>

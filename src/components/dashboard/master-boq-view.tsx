@@ -67,8 +67,8 @@ export function MasterBoQView({ projectId }: { projectId: string }) {
                     setItems(itemsData || []);
                 }
             } catch (err: any) {
-                console.error("Error fetching BoQ:", err);
-                setError("Failed to load Bill of Quantities.");
+                console.error("Error fetching BoQ:", JSON.stringify(err, null, 2));
+                setError(`Failed to load Bill of Quantities. ${err.message || ''}`);
             } finally {
                 setLoading(false);
             }
