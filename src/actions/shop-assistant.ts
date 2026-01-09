@@ -13,6 +13,7 @@ interface SearchResult {
     description: string;
     price: number;
     currency: string;
+    category: string;
     image_url: string;
     dimensions: { l: number; w: number; h: number };
     score: number;
@@ -100,6 +101,7 @@ export async function searchCatalog(query: string, spaceId: string): Promise<Sea
             description: item.description,
             price: item.price,
             currency: item.currency,
+            category: item.category || 'Furniture', // Default if missing
             image_url: item.image_url,
             dimensions: item.dimensions,
             score: originalMatch?.similarity || 0

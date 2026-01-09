@@ -25,7 +25,7 @@ export default function DesignStudio({ projectId, initialSpace }: DesignStudioPr
     useEffect(() => {
         async function load() {
             try {
-                const board = await getDesignBoard(initialSpace.id);
+                const board = await getDesignBoard(initialSpace.id) as any;
                 setBoardId(board.id);
                 if (board.items && Array.isArray(board.items)) {
                     setItems(board.items);
