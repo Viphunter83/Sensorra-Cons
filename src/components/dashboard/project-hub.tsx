@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, HardHat, FileText, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SmartUploader } from '@/components/dashboard/smart-uploader';
+import Link from 'next/link';
 
 // Type definition based on our new schema
 type Project = {
@@ -177,13 +178,15 @@ export function ProjectHub({ initialProjects }: { initialProjects: Project[] }) 
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-between">
-                            <Button variant="outline" size="sm" className="w-full mr-2">
-                                <FileText className="mr-2 h-4 w-4" />
-                                Specs
-                            </Button>
+                            <Link href={`/projects/${project.id}/boq`} className="w-full">
+                                <Button variant="outline" size="sm" className="w-full mr-2">
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Master BoQ
+                                </Button>
+                            </Link>
                             <Button variant="outline" size="sm" className="w-full" onClick={() => setUploadProject(project)}>
                                 <Upload className="mr-2 h-4 w-4" />
-                                Upload
+                                Upload Keys
                             </Button>
                         </CardFooter>
                     </Card>
