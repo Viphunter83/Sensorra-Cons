@@ -7,6 +7,7 @@ interface CreateTenderParams {
     propertyId: string
     zone: string
     userRequest: string
+    projectId?: string // Optional link to a renovation project
 }
 
 interface AIResponse {
@@ -16,13 +17,36 @@ interface AIResponse {
     required_skills: string[]
 }
 
-export async function createTender({ propertyId, zone, userRequest }: CreateTenderParams) {
+export async function createTender({ propertyId, zone, userRequest, projectId }: CreateTenderParams) {
     const supabase = await createClient()
 
     // 1. Auth Check
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
         throw new Error('Unauthorized')
+    }
+
+    // 1b. Compliance Guardrail (Layer 3)
+    if (projectId) {
+        const { data: project } = await supabase
+            .from('projects')
+            .select('status')
+            .eq('id', projectId)
+            .single()
+
+        if (project && project.status === 'permitting') {
+            // Check for approved permit
+            const { data: permit } = await supabase
+                .from('permits')
+                .select('id')
+                .eq('project_id', projectId)
+                .eq('status', 'approved')
+                .maybeSingle()
+
+            if (!permit) {
+                throw new Error("Cannot start Tender. Waiting for Municipality Approval.")
+            }
+        }
     }
 
     // 2. AI Logic via ProxyAPI
@@ -83,7 +107,8 @@ export async function createTender({ propertyId, zone, userRequest }: CreateTend
             scope_of_work: parsed.scope,
             budget_max: parsed.estimated_budget, // This acts as a starting guide
             zone_tag: zone,
-            status: 'open'
+            status: 'open',
+            project_id: projectId || null
         })
         .select()
         .single()

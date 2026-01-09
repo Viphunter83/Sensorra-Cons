@@ -40,6 +40,8 @@ function parsePDFBuffer(buffer: Buffer): Promise<string> {
 export async function uploadAndAnalyzeDocument(formData: FormData) {
     const file = formData.get("file") as File;
     const propertyId = formData.get("property_id") as string;
+    const projectId = formData.get("project_id") as string | null;
+    const itemsDocType = formData.get("doc_type") as string | null; // Manual override
 
     if (!file || !propertyId) {
         return { error: "Missing file or property ID" };
@@ -104,8 +106,9 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
         .from("documents")
         .insert({
             property_id: propertyId,
+            project_id: projectId || null,
             uploader_id: (await supabase.auth.getUser()).data.user?.id!,
-            type: (aiMetadata as any)?.doc_type || "unknown",
+            type: itemsDocType || (aiMetadata as any)?.doc_type || "unknown",
             file_url: filePath,
             status: aiMetadata.error ? "rejected" : "active",
             ai_metadata: aiMetadata,

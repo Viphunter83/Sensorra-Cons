@@ -8,6 +8,8 @@ import { FileText, Calendar, Users } from "lucide-react";
 export default async function TendersListPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current User ID:', user?.id);
+
 
     if (!user) {
         return <div className="p-8">Please log in.</div>;
@@ -17,11 +19,13 @@ export default async function TendersListPage() {
     const { data: tenders } = await supabase
         .from("tenders")
         .select(`
-            *,
-            _count: bids(count)
+            *
         `)
         .eq("owner_id", user.id)
         .order("created_at", { ascending: false });
+
+    // Force cast to avoid TS inference issues with joins/_count
+    const typedTenders = (tenders || []) as any[];
 
     return (
         <div className="space-y-6">
@@ -29,11 +33,16 @@ export default async function TendersListPage() {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">My Tenders</h2>
                     <p className="text-muted-foreground">Manage your requests and review bids.</p>
+                    <div className="text-xs text-red-500 mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                        DEBUG INFO:<br />
+                        User ID: {user.id}<br />
+                        Tenders Found: {typedTenders.length}
+                    </div>
                 </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {tenders?.map((tender) => (
+                {typedTenders.map((tender) => (
                     <Card key={tender.id} className="flex flex-col hover:border-primary/50 transition-colors">
                         <CardHeader>
                             <div className="flex justify-between items-start mb-2">
@@ -54,7 +63,7 @@ export default async function TendersListPage() {
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center">
                                     <Users className="h-4 w-4 mr-1.5" />
-                                    {(tender as any).bids?.[0]?.count || 0} Bids
+                                    {/* Count removed for debug */} Bids
                                 </div>
                                 <div>
                                     Est. {tender.budget_max} AED
@@ -71,7 +80,7 @@ export default async function TendersListPage() {
                     </Card>
                 ))}
 
-                {(!tenders || tenders.length === 0) && (
+                {typedTenders.length === 0 && (
                     <div className="col-span-full text-center py-12 bg-muted/20 rounded-xl border border-dashed">
                         <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                         <h3 className="font-medium">No Tenders Yet</h3>

@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           id: string
           property_id: string
+          project_id: string | null
           uploader_id: string
           type: string
           file_url: string
@@ -59,6 +60,7 @@ export type Database = {
         Insert: {
           id?: string
           property_id: string
+          project_id?: string | null
           uploader_id: string
           type: string
           file_url: string
@@ -70,6 +72,7 @@ export type Database = {
         Update: {
           id?: string
           property_id?: string
+          project_id?: string | null
           uploader_id?: string
           type?: string
           file_url?: string
@@ -87,10 +90,101 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_uploader_id_fkey"
             columns: ["uploader_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      projects: {
+        Row: {
+          id: string
+          property_id: string
+          title: string
+          architect_id: string | null
+          status: "design" | "permitting" | "construction" | "handover"
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          title: string
+          architect_id?: string | null
+          status?: "design" | "permitting" | "construction" | "handover"
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          title?: string
+          architect_id?: string | null
+          status?: "design" | "permitting" | "construction" | "handover"
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_architect_id_fkey"
+            columns: ["architect_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      permits: {
+        Row: {
+          id: string
+          project_id: string
+          authority: string
+          status: "pending" | "approved" | "rejected"
+          approval_doc_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          authority: string
+          status?: "pending" | "approved" | "rejected"
+          approval_doc_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          authority?: string
+          status?: "pending" | "approved" | "rejected"
+          approval_doc_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permits_approval_doc_id_fkey"
+            columns: ["approval_doc_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           }
         ]
@@ -168,6 +262,67 @@ export type Database = {
           }
         ]
       }
+      tenders: {
+        Row: {
+          id: string
+          property_id: string
+          owner_id: string
+          title: string
+          scope_of_work: string | null
+          budget_max: number | null
+          zone_tag: string | null
+          status: Database["public"]["Enums"]["tender_status"] | null
+          project_id: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          owner_id: string
+          title: string
+          scope_of_work?: string | null
+          budget_max?: number | null
+          zone_tag?: string | null
+          status?: Database["public"]["Enums"]["tender_status"] | null
+          project_id?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          property_id?: string
+          owner_id?: string
+          title?: string
+          scope_of_work?: string | null
+          budget_max?: number | null
+          zone_tag?: string | null
+          status?: Database["public"]["Enums"]["tender_status"] | null
+          project_id?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenders_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenders_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -176,7 +331,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      user_role: "owner" | "manager" | "contractor" | "viewer"
+      user_role: "owner" | "manager" | "contractor" | "viewer" | "architect" | "consultant" | "inspector"
       doc_status: "processing" | "active" | "archived" | "rejected"
       tender_status: "draft" | "open" | "review" | "awarded" | "closed"
     }

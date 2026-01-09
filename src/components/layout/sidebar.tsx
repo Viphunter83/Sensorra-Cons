@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, FileText, Archive, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Archive, Settings, LogOut, FolderKanban } from "lucide-react";
 
 export function Sidebar({ className }: { className?: string }) {
     const pathname = usePathname();
 
     const links = [
         { href: "/", label: "My Properties", icon: LayoutDashboard },
+        { href: "/projects", label: "Projects", icon: FolderKanban },
         { href: "/tenders", label: "Tenders", icon: FileText },
         { href: "/archive", label: "Archive", icon: Archive },
         { href: "/settings", label: "Settings", icon: Settings },

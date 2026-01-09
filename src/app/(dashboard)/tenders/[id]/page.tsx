@@ -8,20 +8,51 @@ export default async function TenderDetailsPage({ params }: { params: Promise<{ 
     const supabase = await createClient();
     const { id } = await params;
 
-    // Fetch Tender
-    const { data: tender, error } = await supabase
+    // 1. Fetch Tender (Base Data)
+    const { data: tenderData, error: tenderError } = await supabase
         .from("tenders")
-        .select(`
-            *,
-            bids (
-                id, price, comment, created_at,
-                profiles (full_name, company_name)
-            )
-        `)
+        .select("*")
         .eq("id", id)
         .single();
 
-    if (error || !tender) return notFound();
+    // 2. Fetch Bids (Separately to isolate RLS issues)
+    const { data: bidsData, error: bidsError } = await supabase
+        .from("bids")
+        .select(`
+            id, price, comment, created_at,
+            profiles (full_name, company_name)
+        `)
+        .eq("tender_id", id);
+
+    // Cast to any to avoid TS inference issues
+    const tender = tenderData as any;
+    const bids = (bidsData || []) as any[];
+
+    if (tenderError) {
+        console.error("Error fetching tender:", tenderError);
+        return (
+            <div className="p-8 text-red-500 border border-red-200 bg-red-50 rounded-xl">
+                <h3 className="font-bold">Error Loading Tender</h3>
+                <p>Code: {tenderError.code}</p>
+                <p>Message: {tenderError.message}</p>
+            </div>
+        );
+    }
+
+    if (bidsError) {
+        console.error("Error fetching bids:", bidsError);
+        // Don't crash the page, just show a warning
+    }
+    if (!tender) {
+        console.error("Tender not found (null result)");
+        return (
+            <div className="p-8 text-orange-500 border border-orange-200 bg-orange-50 rounded-xl">
+                <h3 className="font-bold">Tender Not Found</h3>
+                <p>The requested tender could not be found or you do not have permission to view it.</p>
+                <p className="text-sm mt-2 text-muted-foreground">ID: {id}</p>
+            </div>
+        );
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     const isOwner = user?.id === tender.owner_id;
@@ -62,7 +93,18 @@ export default async function TenderDetailsPage({ params }: { params: Promise<{ 
                         🤖 AI Decision Room
                         <Badge variant="secondary" className="text-xs font-normal">Private</Badge>
                     </h2>
-                    <BidComparisonTable tenderId={tender.id} bids={tender.bids} />
+                    <BidComparisonTable tenderId={tender.id} bids={bids} />
+
+                    {bids.length === 0 && !bidsError && (
+                        <div className="text-sm text-muted-foreground italic">
+                            No bids received yet.
+                        </div>
+                    )}
+                    {bidsError && (
+                        <div className="text-sm text-red-500">
+                            Failed to load bids: {bidsError.message}
+                        </div>
+                    )}
                 </div>
             )}
 

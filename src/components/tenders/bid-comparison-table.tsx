@@ -18,6 +18,9 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
     const [loading, setLoading] = useState(false)
     const [awarding, setAwarding] = useState<string | null>(null)
 
+    // Robust default
+    const safeBids = bids || [];
+
     const handleAnalyze = async () => {
         setLoading(true)
         try {
@@ -41,7 +44,7 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
         }
     }
 
-    if (bids.length < 2 && !analysis) {
+    if (safeBids.length < 2 && !analysis) {
         return (
             <div className="text-center p-8 bg-muted/50 rounded-xl border border-dashed">
                 <AlertTriangle className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
@@ -171,7 +174,7 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                             <tr className="bg-muted/20">
                                 <td className="p-4"></td>
                                 {analysis.comparison_matrix.contractors.map((c: any, i: number) => {
-                                    const matchingBid = bids.find(b =>
+                                    const matchingBid = safeBids.find(b =>
                                         ((b.profiles?.company_name || b.profiles?.full_name) === c.name)
                                         || c.name.includes('Unknown') // Fallback match
                                     )

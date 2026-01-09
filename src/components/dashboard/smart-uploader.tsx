@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function SmartUploader({ propertyId }: { propertyId: string }) {
+export function SmartUploader({ propertyId, projectId, defaultDocType }: { propertyId: string, projectId?: string, defaultDocType?: string }) {
     const [status, setStatus] = useState<"idle" | "uploading" | "analyzing" | "success" | "error">("idle");
     const [message, setMessage] = useState("");
 
@@ -22,6 +22,8 @@ export function SmartUploader({ propertyId }: { propertyId: string }) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("property_id", propertyId);
+        if (projectId) formData.append("project_id", projectId);
+        if (defaultDocType) formData.append("doc_type", defaultDocType);
 
         try {
             // Step 1: Upload & Analyze (Server Action)
