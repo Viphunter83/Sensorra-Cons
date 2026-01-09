@@ -126,8 +126,8 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="p-4 text-left font-medium text-muted-foreground">Criteria</th>
-                                        {analysis.comparison_matrix.contractors.map((c: any) => (
-                                            <th key={c.name} className="p-4 text-left font-semibold text-foreground">
+                                        {analysis.comparison_matrix.contractors.map((c: any, i: number) => (
+                                            <th key={`${c.name}-${i}`} className="p-4 text-left font-semibold text-foreground">
                                                 {c.name}
                                             </th>
                                         ))}
@@ -137,8 +137,8 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                                     {analysis.comparison_matrix.criteria.map((criteria: string, idx: number) => (
                                         <tr key={criteria}>
                                             <td className="p-4 font-medium">{criteria}</td>
-                                            {analysis.comparison_matrix.contractors.map((c: any) => (
-                                                <td key={c.name} className="p-4">
+                                            {analysis.comparison_matrix.contractors.map((c: any, i: number) => (
+                                                <td key={`${c.name}-${i}`} className="p-4">
                                                     <div className="flex items-center gap-2">
                                                         <div className="h-2 w-16 bg-muted rounded-full overflow-hidden">
                                                             <div
@@ -154,8 +154,8 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                                     ))}
                                     <tr>
                                         <td className="p-4 font-medium align-top">Pros</td>
-                                        {analysis.comparison_matrix.contractors.map((c: any) => (
-                                            <td key={c.name + 'pros'} className="p-4 align-top">
+                                        {analysis.comparison_matrix.contractors.map((c: any, i: number) => (
+                                            <td key={`${c.name}-pros-${i}`} className="p-4 align-top">
                                                 <ul className="space-y-1">
                                                     {c.pros.map((p: string) => (
                                                         <li key={p} className="flex items-start text-xs text-green-700">
@@ -169,8 +169,8 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                                     </tr>
                                     <tr>
                                         <td className="p-4 font-medium align-top">Cons</td>
-                                        {analysis.comparison_matrix.contractors.map((c: any) => (
-                                            <td key={c.name + 'cons'} className="p-4 align-top">
+                                        {analysis.comparison_matrix.contractors.map((c: any, i: number) => (
+                                            <td key={`${c.name}-cons-${i}`} className="p-4 align-top">
                                                 <ul className="space-y-1">
                                                     {c.cons.map((p: string) => (
                                                         <li key={p} className="flex items-start text-xs text-red-700">
@@ -206,8 +206,8 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                                         <tr className="border-b">
                                             <th className="p-2 text-left bg-muted/30 w-[300px]">Master BOQ Item</th>
                                             <th className="p-2 text-center bg-muted/30 w-[100px]">Master Qty</th>
-                                            {analysis.comparison_matrix.contractors.map((c: any) => (
-                                                <th key={c.name} className="p-2 text-center border-l bg-muted/10">
+                                            {analysis.comparison_matrix.contractors.map((c: any, i: number) => (
+                                                <th key={`${c.name}-${i}`} className="p-2 text-center border-l bg-muted/10">
                                                     {c.name}
                                                 </th>
                                             ))}
