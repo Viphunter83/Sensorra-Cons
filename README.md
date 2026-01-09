@@ -7,7 +7,8 @@ Sensorra AI is the "No-BIM" & "AI-First" ecosystem for managing real estate asse
 ## Documentation
 
 *   [**White Paper & Concept**](./docs/whitepaper.md): Detailed explanation of the philosophy, business logic, and lifecycle stages.
-*   [**Project Status**](./task.md): Current tasks and progress.
+*   [**Development Status**](./docs/development_status.md): 🚀 Current Phase & Feature Breakdown.
+*   [**Task List**](./task.md): Granular task tracking.
 
 ## Tech Stack
 
