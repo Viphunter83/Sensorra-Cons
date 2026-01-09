@@ -43,6 +43,7 @@ export default function ClientPropertyPage({ propertyId, initialSpace, initialBo
                         <PropertySpaceWrapper
                             boardId={initialBoard.id}
                             modelUrl={initialSpace?.model_url}
+                            dimensions={initialSpace?.dimensions}
                             initialItems={initialItems}
                         />
                     ) : (

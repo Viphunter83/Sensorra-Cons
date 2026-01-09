@@ -9,12 +9,13 @@ interface PropertySpaceWrapperProps {
     boardId: string;
     modelUrl?: string | null;
     initialItems: PlacedItem[];
+    dimensions?: { l: number; w: number; h: number };
 }
 
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-export default function PropertySpaceWrapper({ boardId, modelUrl, initialItems }: PropertySpaceWrapperProps) {
+export default function PropertySpaceWrapper({ boardId, modelUrl, initialItems, dimensions }: PropertySpaceWrapperProps) {
     const [items, setItems] = useState<PlacedItem[]>(initialItems);
     const [saving, setSaving] = useState(false);
     const [isDesignMode, setIsDesignMode] = useState(false); // Default to view mode
@@ -76,7 +77,7 @@ export default function PropertySpaceWrapper({ boardId, modelUrl, initialItems }
 
             <SpaceViewer
                 modelUrl={modelUrl}
-                dimensions={{ l: 10, w: 10, h: 3 }}
+                dimensions={dimensions || { l: 10, w: 10, h: 3 }}
                 items={items}
                 onItemMove={handleItemMove}
                 onItemsChange={handleItemsChange}

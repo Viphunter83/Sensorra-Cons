@@ -210,3 +210,49 @@ export async function matchBidItems(
     }
 }
 
+// ... existing code ...
+
+export async function parseContractorQuote(promptText: string): Promise<{ items: BoQItem[], total: number }> {
+    const systemPrompt = `
+    You are an expert Quantity Surveyor AI.
+    Your task is to extract line items from a Contractor's Quote (PDF text).
+    
+    Structured Output Format (JSON):
+    {
+      "items": [
+        {
+          "description": "Item description",
+          "quantity": 10,
+          "unit": "m2",
+          "unit_price": 150,
+          "total_price": 1500,
+          "category": "Flooring"
+        }
+      ],
+      "total": 1500
+    }
+    
+    Rules:
+    - Extract ALL line items.
+    - Standardize units where possible.
+    - Ensure totals match quantity * unit_price.
+    `;
+
+    try {
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: promptText }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.1, // High precision
+        });
+
+        const result = JSON.parse(completion.choices[0].message.content || "{}");
+        return result;
+    } catch (error) {
+        console.error("AI Parse Quote Failed:", error);
+        return { items: [], total: 0 };
+    }
+}

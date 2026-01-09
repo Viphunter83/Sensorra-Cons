@@ -8,14 +8,20 @@ import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default async function ProjectPage({ params }: { params: { id: string } }) {
+import { PassportManager } from '@/components/passport/passport-manager';
+
+export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await createClient();
 
-    // Fetch Project Details
+    // Fetch Project Details with Timeline Events
     const { data: project } = await supabase
         .from('projects')
-        .select('*, properties(title)')
+        .select(`
+            *, 
+            properties(title),
+            timeline_events(*)
+        `)
         .eq('id', id)
         .single();
 
@@ -42,6 +48,7 @@ export default async function ProjectPage({ params }: { params: { id: string } }
                     <TabsTrigger value="permits">Permits & NOC</TabsTrigger>
                     <TabsTrigger value="boq">Master BoQ</TabsTrigger>
                     <TabsTrigger value="design">AI Design</TabsTrigger>
+                    <TabsTrigger value="passport" className="text-yellow-700 data-[state=active]:bg-yellow-50">Passport</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview">
@@ -66,6 +73,10 @@ export default async function ProjectPage({ params }: { params: { id: string } }
                             Open Design Editor
                         </Button>
                     </Link>
+                </TabsContent>
+
+                <TabsContent value="passport">
+                    <PassportManager project={project} />
                 </TabsContent>
             </Tabs>
         </div>

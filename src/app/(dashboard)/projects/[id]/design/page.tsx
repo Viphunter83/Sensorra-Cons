@@ -13,20 +13,23 @@ export default async function DesignPage({ params }: PageProps) {
 
     // Fetch existing spaces
     const spaces = await getProjectSpaces(projectId);
-    let activeSpace;
 
+    // Auto-create default room if no spaces exist (Streamlined onboarding)
     if (!spaces || spaces.length === 0) {
-        // Auto-create default room if none exists (Streamlined onboarding)
-        activeSpace = await createDefaultSpace(projectId);
-    } else {
-        activeSpace = spaces[0];
+        await createDefaultSpace(projectId);
+        // Re-fetch handled by revalidatePath in action or basic reload logic
+        // But here we might just need to push one manually if action doesn't return list
     }
+
+    const initialSpaces = spaces && spaces.length > 0 ? spaces : [{ id: 'temp', name: 'Loading...', dimensions: { l: 5, w: 5, h: 3 } }];
+    const activeSpaceId = initialSpaces[0].id;
 
     return (
         <div className="h-full w-full relative">
             <DesignStudio
                 projectId={projectId}
-                initialSpace={activeSpace}
+                spaces={initialSpaces}
+                initialSpaceId={activeSpaceId}
             />
 
             {/* Dev Helper: Seed Button */}

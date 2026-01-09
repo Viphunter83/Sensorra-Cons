@@ -37,6 +37,7 @@ interface SpaceViewerProps {
     onItemMove?: (itemId: string, position: [number, number, number], rotation: [number, number, number]) => void;
     onItemsChange?: (items: PlacedItem[]) => void;
     isDesignMode?: boolean;
+    dreamImageUrl?: string | null;
 }
 
 function GLTFRoom({ url }: { url: string }) {
@@ -128,22 +129,37 @@ function ItemMesh({ item, modelUrl, onSelect }: { item: PlacedItem, modelUrl?: s
 }
 
 function ModelFromUrl({ url, position, rotation, onClick }: any) {
-    // Safe load
-    // Need to handle errors?
-    // For now assume valid URL
     const { scene } = useGLTF(url) as any;
-    const cloned = scene.clone();
+    // Clone scene to avoid shared mutations
+    const cloned = React.useMemo(() => scene.clone(), [scene]);
+
+    // HACK: Normalize scale for known giant models
+    // Using simple string matching for now
+    let scale: [number, number, number] = [1, 1, 1];
+    let isLantern = false;
+
+    if (url && typeof url === 'string') {
+        const lower = url.toLowerCase();
+        if (lower.includes('lantern')) {
+            // console.log('[SpaceViewer] Detect Lantern -> Apply Scale [0.02, 0.02, 0.02]');
+            scale = [0.03, 0.03, 0.03]; // 10x smaller than before!
+        } else if (lower.includes('box')) {
+            scale = [0.5, 0.5, 0.5];
+        }
+    }
 
     return (
-        <primitive
-            object={cloned}
+        <group
             position={position}
             rotation={rotation}
-            onClick={(e: any) => {
+            scale={scale}
+            onClick={(e) => {
                 e.stopPropagation();
                 onClick();
             }}
-        />
+        >
+            <primitive object={cloned} />
+        </group>
     );
 }
 
@@ -154,7 +170,8 @@ export default function SpaceViewer({
     onItemSelect,
     onItemMove,
     onItemsChange,
-    isDesignMode = true
+    isDesignMode = true,
+    dreamImageUrl
 }: SpaceViewerProps) {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [currentItems, setCurrentItems] = useState<PlacedItem[]>(items);
@@ -194,7 +211,7 @@ export default function SpaceViewer({
     };
 
     return (
-        <div className="w-full h-full relative bg-slate-100">
+        <div className="w-full h-full relative bg-slate-100 group">
             <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
                 <Suspense fallback={null}>
                     <Environment preset="apartment" />
@@ -216,7 +233,25 @@ export default function SpaceViewer({
                 </Suspense>
             </Canvas>
 
-            {isDesignMode && (
+            {/* Dream Overlay Mode */}
+            {dreamImageUrl && (
+                <div className="absolute inset-0 z-10 pointer-events-none transition-all duration-700">
+                    <div className="relative w-full h-full overflow-hidden">
+                        {/* The Dream Image */}
+                        <img
+                            src={dreamImageUrl}
+                            alt="Dream Generated"
+                            className="w-full h-full object-cover opacity-80"
+                        />
+                        {/* Comparison Slider Handle (Fake for MVP) */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg border border-white/50 text-white font-medium shadow-xl">
+                            Dream View (Overlay)
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isDesignMode && !dreamImageUrl && (
                 <DreamControlPanel onDreamRealized={handleDreamRealized} />
             )}
         </div>
