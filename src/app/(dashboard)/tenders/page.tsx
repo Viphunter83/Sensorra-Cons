@@ -33,11 +33,7 @@ export default async function TendersListPage() {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">My Tenders</h2>
                     <p className="text-muted-foreground">Manage your requests and review bids.</p>
-                    <div className="text-xs text-red-500 mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                        DEBUG INFO:<br />
-                        User ID: {user.id}<br />
-                        Tenders Found: {typedTenders.length}
-                    </div>
+
                 </div>
                 <Button asChild>
                     <Link href="/tenders/new">
