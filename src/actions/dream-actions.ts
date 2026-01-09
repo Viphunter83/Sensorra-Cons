@@ -1,5 +1,6 @@
 'use server';
 
+import { createClient } from '@/utils/supabase/server';
 import { v4 as uuidv4 } from 'uuid';
 
 // Types duplicated from SpaceViewer for simplicity in this MVP phase
@@ -13,6 +14,7 @@ export interface DreamCatalogItem {
     dimensions: { l: number; w: number; h: number };
     model_url?: string;
     image_url?: string;
+    description?: string;
 }
 
 export interface DreamPlacedItem {
@@ -29,96 +31,69 @@ export interface DreamResult {
     items: DreamPlacedItem[];
 }
 
-// HARDCODED "MAGIC" CATALOG
-const CATALOG: Record<string, DreamCatalogItem> = {
-    'japandi-sofa': {
-        id: 'japandi-sofa',
-        name: 'Kyoto Low Sofa',
-        category: 'Sofa',
-        price: 1200,
-        currency: 'USD',
-        dimensions: { l: 2.2, w: 0.9, h: 0.7 },
-        // Using a placeholder box for now, in real life this is a GLB URL
-        model_url: 'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/sofa-draco.glb',
-    },
-    'paper-lamp': {
-        id: 'paper-lamp',
-        name: 'Noguchi Floor Lamp',
-        category: 'Lighting',
-        price: 450,
-        currency: 'USD',
-        dimensions: { l: 0.5, w: 0.5, h: 1.6 },
-        // Using a placeholder or potentially a real GLB if available
-        model_url: '',
-    },
-    'industrial-table': {
-        id: 'industrial-table',
-        name: 'Steel Raw Table',
-        category: 'Table',
-        price: 890,
-        currency: 'USD',
-        dimensions: { l: 2.0, w: 1.0, h: 0.75 },
-        model_url: '',
-    },
-    'eames-chair': {
-        id: 'eames-chair',
-        name: 'Eames Lounge Copy',
-        category: 'Chair',
-        price: 350,
-        currency: 'USD',
-        dimensions: { l: 0.8, w: 0.8, h: 0.9 },
-        model_url: '',
-    }
-};
-
 export async function generateRoomDesign(prompt: string): Promise<DreamResult> {
-    // 1. Simulate AI Thinking Time
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
+    const supabase = await createClient();
     const p = prompt.toLowerCase();
+
+    // 1. Identify intent/keywords
+    // Simple keyword mapping for MVP
+    let queries: string[] = [];
+
+    if (p.includes('sofa') || p.includes('living')) {
+        queries.push('sofa');
+        queries.push('lamp'); // Always adding a lamp for vibe
+    } else if (p.includes('work') || p.includes('office')) {
+        queries.push('desk');
+        queries.push('chair');
+    } else if (p.includes('bed') || p.includes('sleep')) {
+        queries.push('bed');
+        queries.push('nightstand');
+    } else {
+        // Default fun mix
+        queries.push('chair');
+        queries.push('table');
+    }
+
+    // 2. Fetch Items from Real DB
     const items: DreamPlacedItem[] = [];
 
-    // 2. "AI" Logic (Hallucination)
-    if (p.includes('japandi') || p.includes('zen') || p.includes('minimal')) {
-        // Layout: Sofa in center, Lamp in corner
+    // We fetch one item per query keyword to build the room
+    // Promise.all for parallelism
+    const foundItems = await Promise.all(
+        queries.map(async (q) => {
+            const { data } = await supabase
+                .from('catalog_items')
+                .select('*')
+                .ilike('name', `%${q}%`)
+                .not('model_url', 'is', null) // Ensure we only get items with 3D models
+                .limit(1); // Just grab the first match for now ("I'm feeling lucky")
+            return data?.[0] as DreamCatalogItem | undefined;
+        })
+    );
+
+    // 3. Arrange Items in Space ("The Reality Anchor")
+    let zOffset = 0;
+
+    foundItems.forEach((catItem, index) => {
+        if (!catItem) return;
+
         items.push({
             id: uuidv4(),
-            catalog_item_id: 'japandi-sofa',
-            position: [0, 0, -1], // Back a bit
+            catalog_item_id: catItem.id,
+            position: [index * 1.5 - 1, 0, zOffset], // Simple layout: side by side
             rotation: [0, 0, 0],
-            catalog_item: CATALOG['japandi-sofa']
+            catalog_item: catItem
         });
-        items.push({
-            id: uuidv4(),
-            catalog_item_id: 'paper-lamp',
-            position: [2, 0, -2], // Corner
-            rotation: [0, -0.5, 0], // Slightly Angled
-            catalog_item: CATALOG['paper-lamp']
-        });
-    } else if (p.includes('industrial') || p.includes('loft') || p.includes('dark')) {
-        items.push({
-            id: uuidv4(),
-            catalog_item_id: 'industrial-table',
-            position: [0, 0, 0], // Center
-            rotation: [0, 0, 0],
-            catalog_item: CATALOG['industrial-table']
-        });
-        items.push({
-            id: uuidv4(),
-            catalog_item_id: 'eames-chair',
-            position: [0, 0, 1.5], // In front of table
-            rotation: [0, 3.14, 0], // Facing table
-            catalog_item: CATALOG['eames-chair']
-        });
-    } else {
-        // Default "Chaotic" Dream
-        items.push({
-            id: uuidv4(),
-            catalog_item_id: 'japandi-sofa',
-            position: [0, 0, 0],
-            rotation: [0, 0, 0],
-            catalog_item: CATALOG['japandi-sofa']
-        });
+    });
+
+    // Fallback if DB is empty or no matches (Hallucinate from hardcoded backup if needed? 
+    // No, let's be honest and return empty or error to encourage seeding)
+    if (items.length === 0) {
+        return {
+            success: false,
+            message: "AI found no matching real-world items. Try 'sofa' or 'chair'.",
+            items: []
+        };
     }
 
     return {

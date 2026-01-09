@@ -144,7 +144,7 @@ export async function generateBoQ(content: string, isImage: boolean = false): Pr
     `;
 
     try {
-        let messages: any[] = [{ role: "system", content: systemPrompt }];
+        const messages: any[] = [{ role: "system", content: systemPrompt }];
 
         if (isImage) {
             messages.push({

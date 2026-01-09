@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { UploadCloud, FileText, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import { UploadCloud, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { uploadAndAnalyzeDocument } from "@/actions/upload-doc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,14 +35,12 @@ export function SmartUploader({ propertyId, projectId, defaultDocType, metadata 
                 throw new Error(result.error);
             }
 
-            setStatus("success");
-            setMessage(`Successfully analyzed: ${file.name}`);
         } catch (err: any) {
             console.error(err);
             setStatus("error");
             setMessage(err.message || "Upload failed");
         }
-    }, [propertyId]);
+    }, [propertyId, projectId, defaultDocType, metadata]);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,

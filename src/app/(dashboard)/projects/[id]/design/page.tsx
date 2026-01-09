@@ -12,7 +12,7 @@ export default async function DesignPage({ params }: PageProps) {
     const { id: projectId } = await params;
 
     // Fetch existing spaces
-    let spaces = await getProjectSpaces(projectId);
+    const spaces = await getProjectSpaces(projectId);
     let activeSpace;
 
     if (!spaces || spaces.length === 0) {

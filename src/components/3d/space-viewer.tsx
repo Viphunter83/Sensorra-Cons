@@ -1,9 +1,11 @@
 'use client';
 
-import React, { Suspense, useState, useRef } from 'react';
+import React, { Suspense, useState, useRef, useEffect } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment, ContactShadows, TransformControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { DreamControlPanel } from './dream-panel';
+import { DreamPlacedItem, DreamResult } from '@/actions/dream-actions';
 
 // Types (to be moved to global types later)
 export interface CatalogItem {
@@ -15,6 +17,8 @@ export interface CatalogItem {
     dimensions: { l: number; w: number; h: number };
     model_url?: string; // URL to GLB/GLTF
     image_url?: string;
+    description?: string;
+    score?: number; // Similarity score for AI search
 }
 
 export interface PlacedItem {
@@ -31,6 +35,7 @@ interface SpaceViewerProps {
     items: PlacedItem[];
     onItemSelect?: (itemId: string | null) => void;
     onItemMove?: (itemId: string, position: [number, number, number], rotation: [number, number, number]) => void;
+    onItemsChange?: (items: PlacedItem[]) => void;
     isDesignMode?: boolean;
 }
 
@@ -60,178 +65,163 @@ function FurnitureItem({
     item,
     isSelected,
     onSelect,
-    onMove,
-    isDesignMode
+    onMove
 }: {
     item: PlacedItem;
     isSelected: boolean;
     onSelect: () => void;
-    onMove?: (pos: [number, number, number], rot: [number, number, number]) => void;
-    isDesignMode: boolean;
+    onMove: (pos: [number, number, number], rot: [number, number, number]) => void;
 }) {
-    const meshRef = useRef<THREE.Group>(null);
-
-    const glbUrl = item.catalog_item?.model_url;
-    let scene = null;
-
-    if (glbUrl && (glbUrl.startsWith('http') || glbUrl.startsWith('/'))) {
-        try {
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            const gltf = useGLTF(glbUrl);
-            scene = gltf.scene.clone();
-        } catch (e) {
-            console.warn("Failed to load model", glbUrl);
-        }
-    }
-
-    const dims = item.catalog_item?.dimensions || { l: 1, w: 1, h: 1 };
+    // Determine model URL: Mock AI returns 'model_url' inside catalog_item.
+    const modelUrl = item.catalog_item?.model_url;
 
     return (
-        <group
-            onClick={(e) => {
-                e.stopPropagation();
-                onSelect();
-            }}
-        >
-            {isSelected && isDesignMode && (
+        <group>
+            {isSelected ? (
                 <TransformControls
-                    object={meshRef as any}
-                    mode="translate" // Default mode, we can add a toggle later
-                    onObjectChange={(e) => {
-                        if (meshRef.current) {
-                            const pos = meshRef.current.position;
-                            const rot = meshRef.current.rotation;
-                            // TransformControls modifies object in place, we need to sync up
-                            // But better to save state on drag end.
+                    mode="translate"
+                    onObjectChange={(e: any) => {
+                        if (e?.target?.object) {
+                            const o = e.target.object;
+                            onMove([o.position.x, o.position.y, o.position.z], [o.rotation.x, o.rotation.y, o.rotation.z]);
                         }
                     }}
-                    onMouseUp={() => {
-                        if (meshRef.current) {
-                            const pos = meshRef.current.position;
-                            const rot = meshRef.current.rotation;
-                            onMove?.([pos.x, pos.y, pos.z], [rot.x, rot.y, rot.z]);
-                        }
-                    }}
-                />
-            )}
-
-            <group
-                ref={meshRef}
-                position={item.position}
-                rotation={item.rotation}
-            >
-                {scene ? (
-                    <primitive object={scene} scale={[1, 1, 1]} />
-                ) : (
-                    <mesh>
-                        <boxGeometry args={[dims.l, dims.h, dims.w]} />
-                        <meshStandardMaterial color={isSelected ? "#aaaaaa" : "#e2e8f0"} />
-                        <lineSegments>
-                            <edgesGeometry args={[new THREE.BoxGeometry(dims.l, dims.h, dims.w)]} />
-                            <lineBasicMaterial color="black" />
-                        </lineSegments>
-                    </mesh>
-                )}
-            </group>
-
-            {/* Label */}
-            {isSelected && (
-                <Html position={[item.position[0], item.position[1] + dims.h + 0.5, item.position[2]]} center>
-                    <div className="bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none select-none">
-                        {item.catalog_item?.name || 'Unknown Item'}
-                        <br />
-                        {item.catalog_item?.price} {item.catalog_item?.currency}
-                    </div>
-                </Html>
+                >
+                    <ItemMesh item={item} modelUrl={modelUrl} onSelect={onSelect} />
+                </TransformControls>
+            ) : (
+                <ItemMesh item={item} modelUrl={modelUrl} onSelect={onSelect} />
             )}
         </group>
     );
 }
 
-// ... imports
-import { DreamControlPanel } from './dream-panel';
+function ItemMesh({ item, modelUrl, onSelect }: { item: PlacedItem, modelUrl?: string, onSelect: () => void }) {
+    // If we have a URL, try to load it. Otherwise box.
+    // We use a Suspense boundary or error boundary ideally.
+    // For MVP, if modelUrl is empty or fails, we fallback to box?
+    // useGLTF will crash if url is empty.
+
+    if (modelUrl) {
+        return <ModelFromUrl url={modelUrl} position={item.position} rotation={item.rotation} onClick={onSelect} />;
+    }
+
+    // Fallback Box
+    return (
+        <mesh
+            position={item.position}
+            rotation={item.rotation}
+            onClick={(e) => {
+                e.stopPropagation();
+                onSelect();
+            }}
+        >
+            <boxGeometry args={[0.5, 0.5, 0.5]} />
+            <meshStandardMaterial color="hotpink" />
+            <Html position={[0, 1, 0]}>
+                <div className="bg-black/50 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    {item.catalog_item?.name || 'Unknown Item'}
+                </div>
+            </Html>
+        </mesh>
+    );
+}
+
+function ModelFromUrl({ url, position, rotation, onClick }: any) {
+    // Safe load
+    // Need to handle errors?
+    // For now assume valid URL
+    const { scene } = useGLTF(url) as any;
+    const cloned = scene.clone();
+
+    return (
+        <primitive
+            object={cloned}
+            position={position}
+            rotation={rotation}
+            onClick={(e: any) => {
+                e.stopPropagation();
+                onClick();
+            }}
+        />
+    );
+}
 
 export default function SpaceViewer({
     modelUrl,
     dimensions,
-    items: initialItems,
+    items,
     onItemSelect,
     onItemMove,
-    isDesignMode = false
+    onItemsChange,
+    isDesignMode = true
 }: SpaceViewerProps) {
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [currentItems, setCurrentItems] = useState<PlacedItem[]>(initialItems);
+    const [currentItems, setCurrentItems] = useState<PlacedItem[]>(items);
 
-    // Sync initialItems if they change from parent (optional, but good for robust sync)
-    // For now we assume local state takes precedence after a "Dream" event
-
-    // Handler for when the "Dream Engine" returns results
-    const handleDreamRealized = (result: any) => {
-        if (result.success && result.items) {
-            // Replace current items with Dream items
-            // We need to map DreamPlacedItem to PlacedItem (they are compatible structurally)
-            setCurrentItems(result.items.map((item: any) => ({
-                ...item,
-                rotation: [item.rotation[0], item.rotation[1], item.rotation[2]] // Ensure array
-            })));
-            console.log("Dream manifest:", result.items);
+    // Sync props to state (External updates)
+    useEffect(() => {
+        // Compare to avoid infinite loop if parent updates on change
+        if (JSON.stringify(items) !== JSON.stringify(currentItems)) {
+            setCurrentItems(items);
         }
-    };
+    }, [items]); // Dependent on items prop
 
-    const handleSelect = (id: string) => {
+    const handleSelect = (id: string | null) => {
         setSelectedId(id);
         onItemSelect?.(id);
     };
 
-    const handleMiss = () => {
-        setSelectedId(null);
-        onItemSelect?.(null);
+    const handleMove = (id: string, pos: [number, number, number], rot: [number, number, number]) => {
+        // Update local state for smoothness
+        const updated = currentItems.map(item =>
+            item.id === id ? { ...item, position: pos, rotation: rot } : item
+        );
+        setCurrentItems(updated);
+
+        // Notify parent
+        onItemMove?.(id, pos, rot);
+        onItemsChange?.(updated);
+    };
+
+    const handleDreamRealized = (result: DreamResult) => {
+        if (result.success && result.items) {
+            const castedNewItems = result.items as unknown as PlacedItem[];
+            const updated = [...currentItems, ...castedNewItems];
+            setCurrentItems(updated);
+            onItemsChange?.(updated);
+        }
     };
 
     return (
-        <div className="w-full h-full min-h-[500px] bg-slate-50 relative rounded-lg overflow-hidden border border-slate-200">
-            {/* Dream Control Panel Overlay */}
-            <DreamControlPanel onDreamRealized={handleDreamRealized} />
-
-            <div className="absolute top-4 right-4 bg-white/90 p-2 rounded shadow text-sm z-10 pointer-events-none">
-                <p className="font-medium text-slate-700">3D Design View</p>
-                <p className="text-slate-500 text-xs text-right">Left click to rotate<br />Right click to pan<br />Scroll to zoom</p>
-            </div>
-
+        <div className="w-full h-full relative bg-slate-100">
             <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
                 <Suspense fallback={null}>
-                    <ambientLight intensity={0.7} />
-                    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} shadow-bias={-0.0001} />
-                    <Environment preset="city" />
+                    <Environment preset="apartment" />
+                    <ambientLight intensity={0.5} />
+                    <RoomModel url={modelUrl} dimensions={dimensions} />
 
-                    <group onPointerMissed={handleMiss}>
-                        {/* Room Shell */}
-                        <RoomModel url={modelUrl} dimensions={dimensions} />
+                    {currentItems.map((item) => (
+                        <FurnitureItem
+                            key={item.id}
+                            item={item}
+                            isSelected={selectedId === item.id}
+                            onSelect={() => handleSelect(item.id)}
+                            onMove={(pos, rot) => handleMove(item.id, pos, rot)}
+                        />
+                    ))}
 
-                        {/* Items */}
-                        {currentItems.map((item) => (
-                            <FurnitureItem
-                                key={item.id}
-                                item={item}
-                                isSelected={selectedId === item.id}
-                                onSelect={() => handleSelect(item.id)}
-                                onMove={(pos, rot) => {
-                                    // Update local state for immediate feedback
-                                    const updated = currentItems.map(i =>
-                                        i.id === item.id ? { ...i, position: pos, rotation: rot } : i
-                                    );
-                                    setCurrentItems(updated as PlacedItem[]);
-                                    onItemMove?.(item.id, pos, rot);
-                                }}
-                                isDesignMode={isDesignMode}
-                            />
-                        ))}
-                    </group>
-
-                    <ContactShadows position={[0, -0.01, 0]} opacity={0.5} scale={20} blur={2} far={4} />
+                    <ContactShadows position={[0, -0.01, 0]} opacity={0.5} scale={20} blur={2} far={4.5} />
                     <OrbitControls makeDefault />
                 </Suspense>
             </Canvas>
+
+            {isDesignMode && (
+                <DreamControlPanel onDreamRealized={handleDreamRealized} />
+            )}
         </div>
     );
 }
+
+// Preload common models if needed (optional)
+// useGLTF.preload('/sofa.glb')

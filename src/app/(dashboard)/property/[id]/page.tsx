@@ -1,66 +1,37 @@
-'use client'
+import React from 'react';
+import { getProjectSpaces, createDefaultSpace, getDesignBoard } from '@/actions/design-actions';
+import ClientPropertyPage from './client-page';
+import { seedCatalog } from '@/actions/seed-catalog';
 
-import { usePropertyStore } from '@/lib/store/property-store'
-import SpaceViewer from '@/components/3d/space-viewer'
-import { DocumentFeed } from '@/components/dashboard/document-feed'
-import { CreateTenderDialog } from '@/components/tenders/create-tender-dialog'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Search } from 'lucide-react'
-import { useParams } from 'next/navigation'
+interface PageProps {
+    params: Promise<{ id: string }>;
+}
 
-export default function PropertyPage() {
-    const { setSearch, selectedZone } = usePropertyStore()
-    const params = useParams()
-    const id = params.id as string
+export default async function PropertyPage({ params }: PageProps) {
+    const { id } = await params;
+
+    // 1. Get or Create Space (Auto-onboarding)
+    let spaces = await getProjectSpaces(id);
+    let activeSpace;
+
+    if (!spaces || spaces.length === 0) {
+        // First time visiting? Create default room.
+        activeSpace = await createDefaultSpace(id);
+    } else {
+        activeSpace = spaces[0];
+    }
+
+    // 2. Get Persistence Board
+    let designBoard = null;
+    if (activeSpace) {
+        designBoard = await getDesignBoard(activeSpace.id);
+    }
 
     return (
-        <div className="flex h-screen w-full flex-col md:flex-row overflow-hidden bg-background font-sans">
-            {/* Left Panel - 3D Twin */}
-            <div className="w-full md:w-[40%] h-[50vh] md:h-full border-r relative bg-slate-50">
-                <div className="absolute top-4 left-4 z-10 bg-white/90 p-3 rounded-lg shadow-sm backdrop-blur border">
-                    <h2 className="font-semibold text-sm">Digital Twin Navigator</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Click "AI Magic Design" to dream up a new room.</p>
-                </div>
-
-                {selectedZone && (
-                    <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center pointer-events-none">
-                        <div className="pointer-events-auto bg-white/90 p-2 rounded-lg shadow-lg backdrop-blur">
-                            <CreateTenderDialog propertyId={id} zone={selectedZone} />
-                        </div>
-                    </div>
-                )}
-
-                {/* 3D Canvas */}
-                <div className="h-full w-full">
-                    <SpaceViewer
-                        dimensions={{ l: 6, w: 5, h: 3 }}
-                        items={[]}
-                        isDesignMode={true}
-                    />
-                </div>
-            </div>
-
-            {/* Right Panel - Data */}
-            <div className="w-full md:w-[60%] flex flex-col h-[50vh] md:h-full">
-                {/* Header / Search */}
-                <div className="border-b p-4 flex gap-4 items-center bg-card sticky top-0 z-20">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search invoices, warranties..."
-                            className="pl-9 bg-muted/50 border-muted-foreground/20 focus-visible:ring-1"
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <Button variant="default" className="shadow-sm">Upload New</Button>
-                </div>
-
-                {/* Feed */}
-                <div className="flex-1 overflow-auto bg-slate-50/50 p-2">
-                    <DocumentFeed propertyId={id} />
-                </div>
-            </div>
-        </div>
-    )
+        <ClientPropertyPage
+            propertyId={id}
+            initialSpace={activeSpace}
+            initialBoard={designBoard}
+        />
+    );
 }

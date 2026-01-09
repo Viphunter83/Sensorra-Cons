@@ -742,4 +742,3 @@ export type Database = {
     }
   }
 }
-}

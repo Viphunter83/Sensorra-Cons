@@ -65,11 +65,11 @@ export default function MarketplaceFeed({ spaceId, onItemSelect }: MarketplaceFe
                 {items.length === 0 && !isPending && (
                     <div className="text-center text-slate-500 text-sm mt-10">
                         <p>Tell the AI what you need.</p>
-                        <p className="text-xs mt-1 text-slate-400">"Find a beige armchair under 2000 AED"</p>
+                        <p className="text-xs mt-1 text-slate-400">&quot;Find a beige armchair under 2000 AED&quot;</p>
                     </div>
                 )}
 
-                {items.map((item: any) => (
+                {items.map((item) => (
                     <div
                         key={item.id}
                         draggable
@@ -79,6 +79,7 @@ export default function MarketplaceFeed({ spaceId, onItemSelect }: MarketplaceFe
                     >
                         <div className="aspect-square bg-slate-200 rounded overflow-hidden relative">
                             {item.image_url ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
                                 <img src={item.image_url} alt={item.name} className="object-cover w-full h-full" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No Image</div>

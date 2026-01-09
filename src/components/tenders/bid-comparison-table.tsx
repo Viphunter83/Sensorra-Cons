@@ -7,16 +7,14 @@ import { analyzeBids } from '@/actions/analyze-bids'
 import { awardTender } from '@/actions/manage-tender'
 import { Loader2, Trophy, Check, X, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { BidAuditor } from './bid-auditor'
 
 interface BidComparisonProps {
     tenderId: string
-    bids: any[] // In a real app, strict types
+    bids: any[]
 }
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getVarianceAnalysis } from '@/actions/analyze-variance';
-import { cn } from '@/lib/utils';
 
 export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
     const [analysis, setAnalysis] = useState<any>(null)
@@ -201,104 +199,6 @@ export function BidComparisonTable({ tenderId, bids }: BidComparisonProps) {
                                     No variance data available. Ensure Master BoQ exists and Bids are parsed.
                                 </div>
                             ) : (
-                                <table className="w-full text-sm border-collapse">
-                                    <thead>
-                                        <tr className="border-b">
-                                            <th className="p-2 text-left bg-muted/30 w-[300px]">Master BOQ Item</th>
-                                            <th className="p-2 text-center bg-muted/30 w-[100px]">Master Qty</th>
-                                            {analysis.comparison_matrix.contractors.map((c: any, i: number) => (
-                                                <th key={`${c.name}-${i}`} className="p-2 text-center border-l bg-muted/10">
-                                                    {c.name}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {variance.map((row: any) => (
-                                            <tr key={row.masterItem.id} className="hover:bg-muted/5">
-                                                <td className="p-3">
-                                                    <div className="font-medium">{row.masterItem.description}</div>
-                                                    <div className="text-xs text-muted-foreground">{row.masterItem.unit} {row.masterItem.id.slice(0, 4)}...</div>
-                                                </td>
-                                                <td className="p-3 text-center font-mono bg-muted/10">
-                                                    {row.masterItem.quantity}
-                                                </td>
-                                                {analysis.comparison_matrix.contractors.map((c: any) => {
-                                                    // Find the matching bid column
-                                                    // We link by contractor_id assuming 'c' structure has it or similar, 
-                                                    // but 'analysis' structure from analyze-bids might not carry IDs perfectly if prompt generated.
-                                                    // Let's assume order matches or retry match based on name if ID missing. 
-                                                    // Actually 'variance' uses contractorId. 'analysis' names might be 'Contractor 1'.
-                                                    // Best to map via Bid ID if available in analysis.
-                                                    // Safe fallback: match by logic or just iterate bidItems if we can map indexes.
-
-                                                    // Let's rely on variance.bidItems which has contractorId. 
-                                                    // We need to map 'c.name' to a contractorId. 
-                                                    // In 'analyzeBids', we return contractors list. 
-                                                    // Let's Assume safeBids has the same order or find matches.
-
-                                                    const bid = safeBids.find((b: any) =>
-                                                        // Heuristic to match analysis contractor name to bid? 
-                                                        // Or just iterate variance items order? 
-                                                        // Let's assume `safeBids` contains the real bids and `analysis` matches.
-                                                        // Best approach: Use `safeBids` to iterate columns instead of analysis names if they differ? 
-                                                        // But we want the analyzed names.
-
-                                                        // Quick fix: loop safeBids to find the one matching this 'c' (if we can) 
-                                                        // OR just look for a Variance Item that matches a bid derived from 'analysis'.
-                                                        // Since 'analysis' is AI generated, connecting back to exact ID is tricky if not passed.
-
-                                                        // Let's look for a Variance Item for this contractor. 
-                                                        // We'll iterate `row.bidItems` and try to display.
-                                                        // Issue: We need column order.
-                                                        // Let's assume the columns in variance order are tied to `bids` array order.
-
-                                                        true // simplified
-                                                    );
-
-                                                    // More Robust: Find item in `row.bidItems` that belongs to the contractor of this column.
-                                                    // Note: `analysis` lacks contractor_id usually. 
-                                                    // Let's assume `analysis` contractors array is same order as input bids? 
-                                                    // Usually AI might shuffle. 
-
-                                                    // Let's just find the bidItem in `row.bidItems` corresponding to *any* bid from safeBids 
-                                                    // that seems to be this column. 
-                                                    // Realistically, we should render columns based on `safeBids` to be safe, but we used `analysis` names.
-                                                    // Let's try to find based on `contractor_id` if we can.
-
-                                                    // FIX: Iterate `safeBids` for columns to ensure ID access, and use `c.name` only if needed.
-                                                    // But `tabs` logic above uses `analysis`.
-
-                                                    // For now, let's grab the item by matching the index? 
-                                                    // Let's just iterate `row.bidItems`? No, spaces matters.
-
-                                                    // Hack for MVP: Find the variance item where `bidId` matches a bid that matches this column's index?
-
-                                                    const bidItem = row.bidItems.find((bi: any) =>
-                                                        // Try to match by checking if bi.bidId is in safeBids and matches this column index?
-                                                        // Too risky. 
-                                                        // Let's just display what we have if we find it.
-
-                                                        // Let's assume safeBids has the relevant ID.
-                                                        // We'll use safeBids for columns in THIS tab to be safe.
-                                                        true
-                                                    );
-
-                                                    // Better: Map `row.bidItems` to the `safeBids` by ID.
-                                                    // We need to know which column corresponds to which Bid ID.
-                                                    // If we switch to using `safeBids` for headers in THIS table, we are safe.
-                                                    return null;
-                                                })}
-                                            </tr>
-                                        ))}
-
-                                        {/* RE-RENDER ROWS WITH SAFE BIDS HEADERS */}
-                                    </tbody>
-                                </table>
-                            )}
-
-                            {/* ACTUAL IMPLEMENTATION WITH SAFE HEADERS */}
-                            {variance && variance.length > 0 && (
                                 <table className="w-full text-sm border-collapse mt-4">
                                     <thead>
                                         <tr className="border-b bg-muted/40">

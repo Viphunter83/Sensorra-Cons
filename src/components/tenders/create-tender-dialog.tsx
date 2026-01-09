@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { createTender } from '@/actions/create-tender'
 import { Loader2, Wand2 } from 'lucide-react'
-import { usePropertyStore } from '@/lib/store/property-store'
-import { Badge } from '@/components/ui/badge'
+// removed unused imports
 
 interface CreateTenderDialogProps {
     propertyId: string

@@ -10,7 +10,7 @@ Current Focus: **Transitioning to Phase IV (Design & Sourcing)**
 | **I** | **The Golden Record** | ✅ **Done** | Core data foundation. Ingestion of blueprints into `master_boq`. |
 | **II** | **Compliance Gate** | ✅ **Done** | Mandatory permit verification before tendering. AI-driven regulation checks. |
 | **III** | **Tender & Audit** | ✅ **Done** | Smart bid ingestion, "Apples-to-Apples" comparison, Variance Analysis. |
-| **IV** | **Design & Sourcing** | 🚧 **Next** | 3D Visualization, "Pinterest-to-Reality", Vendor Matching. |
+| **IV** | **Design & Sourcing** | ✅ **Done** | Dream Engine (AI Design), Full 3D Persistence, Catalog Integration. |
 | **V** | **Operation & Resale** | ⏳ **Planned** | Digital Passport, Asset history, Liquidity tools. |
 
 ---
@@ -35,10 +35,12 @@ Current Focus: **Transitioning to Phase IV (Design & Sourcing)**
     - **Rate Variance**: Compares unit prices against Master Estimate.
 - **Decision Matrix**: Color-coded UI for comparing bids side-by-side (`BidComparisonTable`).
 
-### 🚧 Phase IV: Design & Sourcing (Upcoming)
-- **3D Viewer Integration**: Interactive R3F / Cesium viewer for assets.
-- **Supplier Catalog**: Database of real-world materials and furniture.
-- **Design Agent**: AI that takes a "moodboard" and finds matching catalog items.
+### ✅ Phase IV: Design & Sourcing (Completed)
+- **Digital Twin**: 3D Digital Twin linked to Property ID (`PropetySpaceWrapper`).
+- **Dream Engine**: Generative AI ("Magic Wand") to re-design spaces based on text prompts.
+- **Persistence**: Auto-saving of furniture items to `design_boards` table.
+- **Real Catalog**: Integration with `catalog_items` DB for sourcing real purchasable items.
+- **Unified Studio**: Seamless toggle between "View" and "Design" modes.
 
 ### ⏳ Phase V: Operation & Liquidity (Planned)
 - **Digital Passport**: Publicly verifiable link for asset history.
