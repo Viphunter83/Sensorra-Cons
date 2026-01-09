@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { analyzeDocument } from "@/lib/ai/analyzer";
+import { storeProjectContext } from "@/lib/ai/rag";
 import { revalidatePath } from "next/cache";
 // @ts-ignore
 import PDFParser from "pdf2json";
@@ -84,14 +85,44 @@ export async function uploadAndAnalyzeDocument(formData: FormData) {
     }
 
     // 3. AI Analysis
-    // Check if we have valid text (parsing succeeded)
-    if (parsedText && parsedText.length > 50) {
+    // CASE A: Image (Vision Mode) - e.g. Blueprint
+    if (file.type.startsWith('image/')) {
+        try {
+            log("Sending to AI Vision...");
+            if (!process.env.PROXY_API_KEY) throw new Error("Missing PROXY_API_KEY env var");
+
+            // Ideally we need a Public URL. For strict RLS this is hard.
+            // WORKAROUND: We will skip Vision execution if we can't easily get a public URL from here in this setup.
+            // BUT for the demo, let's assume valid URL generation or pass a placeholder text description.
+            // BETTER: Use the `getPublicUrl` from Supabase if bucket is public.
+
+            const { data: publicUrlData } = supabase.storage.from("sensorra-assets").getPublicUrl(filePath);
+
+            if (publicUrlData.publicUrl) {
+                aiMetadata = await analyzeDocument(publicUrlData.publicUrl, true);
+                log("AI Vision result: Success");
+            }
+
+        } catch (err: any) {
+            console.error("AI Vision skipped:", err);
+            aiMetadata = { error: err.message };
+        }
+    }
+    // CASE B: Text (PDF/Doc) - Extraction + RAG
+    else if (parsedText && parsedText.length > 50) {
         try {
             log("Sending to AI...");
             if (!process.env.PROXY_API_KEY) throw new Error("Missing PROXY_API_KEY env var");
 
-            aiMetadata = await analyzeDocument(parsedText);
+            aiMetadata = await analyzeDocument(parsedText, false);
             log("AI result: Success");
+
+            // RAG Integration: Store embedding for project context
+            if (projectId && !aiMetadata.error) {
+                await storeProjectContext(projectId, parsedText);
+                log("RAG Context Stored");
+            }
+
         } catch (err: any) {
             console.error("AI Analysis skipped due to error:", err);
             aiMetadata = { error: err.message || "Unknown AI error" };
