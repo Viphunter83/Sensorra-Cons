@@ -15,6 +15,11 @@ export default function MarketplaceFeed({ spaceId, onItemSelect }: MarketplaceFe
     const [items, setItems] = useState<CatalogItem[]>([]);
     const [isPending, startTransition] = useTransition();
 
+    // Load initial items
+    React.useEffect(() => {
+        searchCatalog('', spaceId).then(res => setItems(res as CatalogItem[]));
+    }, [spaceId]);
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (!query.trim()) return;

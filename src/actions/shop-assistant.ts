@@ -37,11 +37,39 @@ export async function searchCatalog(query: string, spaceId: string): Promise<Sea
 
     const roomDims = space.dimensions as { l: number; w: number; h: number };
 
-    // 2. Generate Embedding for Query
+    // 2. If query is empty, return "Recent/Featured" items (bypass AI)
+    if (!query || query.trim() === '') {
+        const { data: recentItems, error: recentError } = await supabase
+            .from('catalog_items')
+            .select('*')
+            .limit(20);
+
+        if (recentError) {
+            console.error("Error fetching recent items:", recentError);
+            return [];
+        }
+
+        // Map to SearchResult
+        return recentItems.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            currency: item.currency,
+            category: item.category || 'Furniture',
+            image_url: item.image_url,
+            dimensions: item.dimensions,
+            score: 1.0
+        }));
+    }
+
+    // 3. Generate Embedding for Query
     const embeddingResponse = await openai.embeddings.create({
         model: 'text-embedding-3-small',
         input: query,
     });
+
+    // ... rest of vector search logic ...
 
     const embedding = embeddingResponse.data[0].embedding;
 

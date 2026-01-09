@@ -60,10 +60,12 @@ export default function DesignStudio({ projectId, initialSpace }: DesignStudioPr
 
         try {
             const catalogItem = JSON.parse(data) as CatalogItem;
+            // Randomize position slightly to avoid overlap
+            const randomOffset = (Math.random() - 0.5) * 2;
             const newItem: PlacedItem = {
                 id: crypto.randomUUID(),
                 catalog_item_id: catalogItem.id,
-                position: [0, 0.5, 0], // Drop at center-ish
+                position: [randomOffset, 0.5, randomOffset],
                 rotation: [0, 0, 0],
                 catalog_item: catalogItem
             };

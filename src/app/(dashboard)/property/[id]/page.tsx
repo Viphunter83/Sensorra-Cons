@@ -1,7 +1,7 @@
 'use client'
 
 import { usePropertyStore } from '@/lib/store/property-store'
-import { HouseModel } from '@/components/3d/house-model'
+import SpaceViewer from '@/components/3d/space-viewer'
 import { DocumentFeed } from '@/components/dashboard/document-feed'
 import { CreateTenderDialog } from '@/components/tenders/create-tender-dialog'
 import { Input } from '@/components/ui/input'
@@ -20,7 +20,7 @@ export default function PropertyPage() {
             <div className="w-full md:w-[40%] h-[50vh] md:h-full border-r relative bg-slate-50">
                 <div className="absolute top-4 left-4 z-10 bg-white/90 p-3 rounded-lg shadow-sm backdrop-blur border">
                     <h2 className="font-semibold text-sm">Digital Twin Navigator</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Click rooms (Living Room, Kitchen) to filter documents.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Click "AI Magic Design" to dream up a new room.</p>
                 </div>
 
                 {selectedZone && (
@@ -32,7 +32,13 @@ export default function PropertyPage() {
                 )}
 
                 {/* 3D Canvas */}
-                <HouseModel />
+                <div className="h-full w-full">
+                    <SpaceViewer
+                        dimensions={{ l: 6, w: 5, h: 3 }}
+                        items={[]}
+                        isDesignMode={true}
+                    />
+                </div>
             </div>
 
             {/* Right Panel - Data */}

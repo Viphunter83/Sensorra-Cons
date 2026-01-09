@@ -15,7 +15,8 @@ const SAMPLE_ITEMS = [
         category: "furniture",
         price: 4500,
         dimensions: { l: 2.2, w: 0.9, h: 0.8 },
-        image_url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=300"
+        image_url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=300",
+        model_url: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SheenChair/glTF-Binary/SheenChair.glb" // Real sample model
     },
     {
         name: "Industrial Coffee Table",
@@ -72,9 +73,15 @@ export async function seedCatalog(formData?: FormData) {
 
         if (error) {
             console.error("Failed to insert", item.name, error);
+            return { success: false, error: error.message };
         } else {
             console.log("Inserted", item.name);
         }
     }
+
+    // Refresh the page so the new items appear in the marketplace feed
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath('/', 'layout');
+
     return { success: true, count: SAMPLE_ITEMS.length };
 }
