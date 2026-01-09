@@ -3,7 +3,12 @@ const { Client } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 
 // From .env
-const DATABASE_URL = "postgresql://postgres.wmziixxedcveitftdxnt:Mn03550823)@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres";
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+    console.error('Missing DATABASE_URL env var');
+    process.exit(1);
+}
 
 // Reliable GLB
 const MODEL_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SheenChair/glTF-Binary/SheenChair.glb';

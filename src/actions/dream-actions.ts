@@ -31,73 +31,85 @@ export interface DreamResult {
     items: DreamPlacedItem[];
 }
 
+// 1. Template Definition
+const ROOM_TEMPLATES: Record<string, { query: string; items: { keyword: string; pos: [number, number, number]; rot: [number, number, number] }[] }> = {
+    'office': {
+        query: 'office',
+        items: [
+            { keyword: 'Desk', pos: [0, 0, 0], rot: [0, 0, 0] },
+            { keyword: 'Chair', pos: [0, 0, 1], rot: [0, 3.14, 0] }, // Facing desk
+            { keyword: 'Lamp', pos: [0.8, 0.8, -0.2], rot: [0, 0, 0] } // On desk (approx height)
+        ]
+    },
+    'living': {
+        query: 'living',
+        items: [
+            { keyword: 'Sofa', pos: [0, 0, -2], rot: [0, 0, 0] },
+            { keyword: 'Table', pos: [0, 0, 0], rot: [0, 0, 0] }, // Coffee table
+            { keyword: 'Lamp', pos: [2, 0, -2], rot: [0, 0, 0] }, // Floor lamp
+            { keyword: 'Chair', pos: [-1.5, 0, 0], rot: [0, 1.57, 0] } // Side chair
+        ]
+    },
+    'bedroom': {
+        query: 'bed',
+        items: [
+            { keyword: 'Bed', pos: [0, 0, -1], rot: [0, 0, 0] },
+            { keyword: 'Nightstand', pos: [1.2, 0, -1], rot: [0, 0, 0] },
+            { keyword: 'Lamp', pos: [1.2, 0.6, -1], rot: [0, 0, 0] }
+        ]
+    }
+};
+
 export async function generateRoomDesign(prompt: string): Promise<DreamResult> {
     const supabase = await createClient();
     const p = prompt.toLowerCase();
 
-    // 1. Identify intent/keywords
-    // Simple keyword mapping for MVP
-    let queries: string[] = [];
+    // 1. Determine Template
+    let templateKey = 'living'; // Default
+    if (p.includes('office') || p.includes('work') || p.includes('desk')) templateKey = 'office';
+    else if (p.includes('bed') || p.includes('sleep')) templateKey = 'bedroom';
 
-    if (p.includes('sofa') || p.includes('living')) {
-        queries.push('sofa');
-        queries.push('lamp'); // Always adding a lamp for vibe
-    } else if (p.includes('work') || p.includes('office')) {
-        queries.push('desk');
-        queries.push('chair');
-    } else if (p.includes('bed') || p.includes('sleep')) {
-        queries.push('bed');
-        queries.push('nightstand');
-    } else {
-        // Default fun mix
-        queries.push('chair');
-        queries.push('table');
-    }
+    const template = ROOM_TEMPLATES[templateKey];
+    console.log(`[DreamEngine] Selected Template: ${templateKey}`);
 
-    // 2. Fetch Items from Real DB
+    // 2. Resolve Items for Template
     const items: DreamPlacedItem[] = [];
 
-    // We fetch one item per query keyword to build the room
-    // Promise.all for parallelism
-    const foundItems = await Promise.all(
-        queries.map(async (q) => {
+    // Map template items to catalog queries
+    const resolvedItems = await Promise.all(
+        template.items.map(async (tmplItem) => {
             const { data } = await supabase
                 .from('catalog_items')
                 .select('*')
-                .ilike('name', `%${q}%`)
-                .not('model_url', 'is', null) // Ensure we only get items with 3D models
+                .ilike('name', `%${tmplItem.keyword}%`)
+                .not('model_url', 'is', null)
                 .limit(1);
 
-            console.log(`[DreamEngine] Query: ${q}, Found:`, data?.length); // DEBUG
-            const item = data?.[0] as any; // Cast to any because TS types are outdated
-            if (item) console.log(`[DreamEngine] Item:`, item.name, item.model_url); // DEBUG
+            const catItem = data?.[0] as any; // Cast for TS
+            if (!catItem) {
+                console.warn(`[DreamEngine] Missing catalog item for keyword: ${tmplItem.keyword}`);
+                return null;
+            }
 
-            return data?.[0] as DreamCatalogItem | undefined;
+            return {
+                id: uuidv4(),
+                catalog_item_id: catItem.id,
+                position: tmplItem.pos,
+                rotation: tmplItem.rot,
+                catalog_item: catItem
+            };
         })
     );
-    console.log(`[DreamEngine] Found items count:`, foundItems.filter(Boolean).length); // DEBUG
 
-    // 3. Arrange Items in Space ("The Reality Anchor")
-    let zOffset = 0;
-
-    foundItems.forEach((catItem, index) => {
-        if (!catItem) return;
-
-        items.push({
-            id: uuidv4(),
-            catalog_item_id: catItem.id,
-            position: [index * 1.5 - 1, 0, zOffset], // Simple layout: side by side
-            rotation: [0, 0, 0],
-            catalog_item: catItem
-        });
+    // Filter nulls
+    resolvedItems.forEach(item => {
+        if (item) items.push(item);
     });
 
-    // Fallback if DB is empty or no matches (Hallucinate from hardcoded backup if needed? 
-    // No, let's be honest and return empty or error to encourage seeding)
     if (items.length === 0) {
         return {
             success: false,
-            message: "AI found no matching real-world items. Try 'sofa' or 'chair'.",
+            message: "Could not match design to available catalog items.",
             items: []
         };
     }
