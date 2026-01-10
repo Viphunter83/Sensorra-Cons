@@ -8,11 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { enablePassport, addTimelineEvent } from '@/actions/passport-actions';
+import { Database } from '@/types/database.types';
 import { ExternalLink, Printer, PlusCircle, Unlock, Lock } from 'lucide-react';
+import { enablePassport, addTimelineEvent } from '@/actions/passport-actions';
+
+type ProjectWithEvents = Database['public']['Tables']['projects']['Row'] & {
+    timeline_events: Database['public']['Tables']['timeline_events']['Row'][];
+};
 
 interface PassportManagerProps {
-    project: any;
+    project: ProjectWithEvents;
 }
 
 export function PassportManager({ project }: PassportManagerProps) {
@@ -54,7 +59,7 @@ export function PassportManager({ project }: PassportManagerProps) {
                             Digital Passport Status
                         </CardTitle>
                         <CardDescription>
-                            Enable public read-only access to share this property's history.
+                            Enable public read-only access to share this property&apos;s history.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -90,7 +95,7 @@ export function PassportManager({ project }: PassportManagerProps) {
                 <Card>
                     <CardHeader>
                         <CardTitle>Timeline of Truth</CardTitle>
-                        <CardDescription>Log "Hidden Quality" events to increase resale value.</CardDescription>
+                        <CardDescription>Log &quot;Hidden Quality&quot; events to increase resale value.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -133,7 +138,7 @@ export function PassportManager({ project }: PassportManagerProps) {
                 <div className="space-y-2">
                     <h3 className="text-sm font-semibold text-slate-900">Recent Events</h3>
                     <div className="space-y-2">
-                        {project.timeline_events?.map((e: any) => (
+                        {project.timeline_events?.map((e) => (
                             <div key={e.id} className="text-sm p-3 bg-slate-50 border rounded-md flex justify-between items-center">
                                 <span className="font-medium text-slate-700">{e.title}</span>
                                 <span className="text-slate-400 text-xs">{new Date(e.event_date).toLocaleDateString()}</span>

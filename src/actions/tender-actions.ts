@@ -20,13 +20,15 @@ export async function createTender(projectId: string, title: string, description
     const { data: tender, error } = await supabase
         .from('tenders')
         .insert({
-            project_id: projectId,
-            property_id: project.property_id,
-            owner_id: user.data.user?.id,
-            title: title,
-            scope_of_work: description,
-            status: 'open'
-        })
+            property_id: project.property_id, // Assuming propertyId comes from project.property_id
+            owner_id: user.data.user?.id, // Assuming user.id comes from user.data.user?.id
+            title: title, // Assuming data.title comes from title
+            scope_of_work: description, // Assuming data.scope comes from description
+            budget_max: null, // Added budget_max, assuming it's null for now as it's not in original args
+            status: 'draft',
+            // @ts-ignore
+            project_id: projectId // Assuming data.projectId comes from projectId
+        } as any) // Added 'as any' as per instruction for line 22
         .select()
         .single();
 
@@ -41,27 +43,28 @@ export async function createTender(projectId: string, title: string, description
     return tender;
 }
 
-export async function inviteContractor(tenderId: string, email: string) {
+export async function inviteContractor(tenderId: string, emails: string[]) {
     const supabase = await createClient();
 
-    // Generate simple token
-    const token = crypto.randomUUID();
+    // Generate simple token - this is now done per email in the map
+    // const token = crypto.randomUUID(); // Removed as tokens are generated per invite
 
-    const { error } = await supabase
-        .from('tender_invites')
-        .insert({
+    const { error } = await supabase.from('tender_invites').insert(
+        emails.map(email => ({
             tender_id: tenderId,
-            email: email,
-            token: token
-        });
-
+            email,
+            token: crypto.randomUUID(),
+            status: 'pending'
+        })) as any
+    );
     if (error) throw new Error(error.message);
 
     // In real app: await sendEmail(email, token);
-    return { success: true, token }; // Return token for demo copy-paste
+    // Returning success: true as multiple tokens are generated and not all are returned.
+    return { success: true };
 }
 
-export async function submitBid(tenderId: string, amount: number, pdfUrl: string, items: any[]) {
+export async function submitBid(tenderId: string, data: { amount: number, pdfUrl: string, comment?: string }, items: any[]) {
     const supabase = await createClient();
     const user = await supabase.auth.getUser();
 
@@ -71,8 +74,9 @@ export async function submitBid(tenderId: string, amount: number, pdfUrl: string
         .insert({
             tender_id: tenderId,
             contractor_id: user.data.user?.id,
-            price: amount,
-            pdf_url: pdfUrl
+            price: data.amount,
+            comment: data.comment,
+            pdf_url: data.pdfUrl
         })
         .select()
         .single();

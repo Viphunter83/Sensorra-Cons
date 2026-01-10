@@ -24,6 +24,7 @@ export interface CatalogItem {
 export interface PlacedItem {
     id: string; // Unique instance ID
     catalog_item_id: string;
+    modelUrl: string; // Helper for viewer
     position: [number, number, number];
     rotation: [number, number, number];
     catalog_item?: CatalogItem; // Hydrated data
@@ -38,6 +39,7 @@ interface SpaceViewerProps {
     onItemsChange?: (items: PlacedItem[]) => void;
     isDesignMode?: boolean;
     dreamImageUrl?: string | null;
+    captureRef?: React.MutableRefObject<(() => string) | null>;
 }
 
 function GLTFRoom({ url }: { url: string }) {
@@ -163,6 +165,20 @@ function ModelFromUrl({ url, position, rotation, onClick }: any) {
     );
 }
 
+function SceneCapturer({ captureRef }: { captureRef?: React.MutableRefObject<(() => string) | null> }) {
+    const { gl, scene, camera } = useThree();
+
+    useEffect(() => {
+        if (!captureRef) return;
+        captureRef.current = () => {
+            gl.render(scene, camera);
+            return gl.domElement.toDataURL('image/png');
+        };
+    }, [gl, scene, camera, captureRef]);
+
+    return null;
+}
+
 export default function SpaceViewer({
     modelUrl,
     dimensions,
@@ -171,7 +187,8 @@ export default function SpaceViewer({
     onItemMove,
     onItemsChange,
     isDesignMode = true,
-    dreamImageUrl
+    dreamImageUrl,
+    captureRef
 }: SpaceViewerProps) {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [currentItems, setCurrentItems] = useState<PlacedItem[]>(items);
@@ -201,18 +218,10 @@ export default function SpaceViewer({
         onItemsChange?.(updated);
     };
 
-    const handleDreamRealized = (result: DreamResult) => {
-        if (result.success && result.items) {
-            const castedNewItems = result.items as unknown as PlacedItem[];
-            const updated = [...currentItems, ...castedNewItems];
-            setCurrentItems(updated);
-            onItemsChange?.(updated);
-        }
-    };
-
     return (
         <div className="w-full h-full relative bg-slate-100 group">
-            <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }}>
+            <Canvas shadows camera={{ position: [5, 5, 5], fov: 50 }} gl={{ preserveDrawingBuffer: true }}>
+                <SceneCapturer captureRef={captureRef} />
                 <Suspense fallback={null}>
                     <Environment preset="apartment" />
                     <ambientLight intensity={0.5} />
@@ -250,13 +259,6 @@ export default function SpaceViewer({
                     </div>
                 </div>
             )}
-
-            {isDesignMode && !dreamImageUrl && (
-                <DreamControlPanel onDreamRealized={handleDreamRealized} />
-            )}
         </div>
     );
 }
-
-// Preload common models if needed (optional)
-// useGLTF.preload('/sofa.glb')

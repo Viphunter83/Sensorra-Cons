@@ -52,6 +52,7 @@ export async function enablePassport(projectId: string) {
     const { error } = await supabase
         .from('projects')
         .update({
+            // @ts-ignore
             public_access_token: token,
             is_public: true
         })

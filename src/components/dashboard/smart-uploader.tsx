@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function SmartUploader({ propertyId, projectId, defaultDocType, metadata }: { propertyId: string, projectId?: string, defaultDocType?: string, metadata?: any }) {
+export function SmartUploader({ propertyId, projectId, defaultDocType, metadata }: { propertyId: string, projectId?: string, defaultDocType?: string, metadata?: Record<string, unknown> }) {
     const [status, setStatus] = useState<"idle" | "uploading" | "analyzing" | "success" | "error">("idle");
     const [message, setMessage] = useState("");
 
@@ -35,10 +35,10 @@ export function SmartUploader({ propertyId, projectId, defaultDocType, metadata 
                 throw new Error(result.error);
             }
 
-        } catch (err: any) {
+        } catch (err) {
             console.error(err);
             setStatus("error");
-            setMessage(err.message || "Upload failed");
+            setMessage(err instanceof Error ? err.message : "Upload failed");
         }
     }, [propertyId, projectId, defaultDocType, metadata]);
 

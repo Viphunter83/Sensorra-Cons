@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import { SmartUploader } from "@/components/dashboard/smart-uploader";
 import {
     Dialog,
@@ -31,13 +31,14 @@ const REQUIRED_PERMITS = [
 
 export function ProjectPermits({ projectId, propertyId }: { projectId: string, propertyId: string }) {
     const [permits, setPermits] = useState<Permit[]>([]);
-    const [loading, setLoading] = useState(true);
     const [uploadOpen, setUploadOpen] = useState(false);
     const [selectedAuthority, setSelectedAuthority] = useState<string>("");
 
+    // Memoize supabase client (optional, but good practice if createClient isn't stable)
+    // Actually standard pattern is just calling it.
     const supabase = createClient();
 
-    const fetchPermits = async () => {
+    const fetchPermits = useCallback(async () => {
         try {
             const { data, error } = await supabase
                 .from("permits")
@@ -48,10 +49,8 @@ export function ProjectPermits({ projectId, propertyId }: { projectId: string, p
             setPermits(data || []);
         } catch (err) {
             console.error("Error fetching permits:", err);
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [projectId, supabase]);
 
     useEffect(() => {
         fetchPermits();
@@ -66,7 +65,7 @@ export function ProjectPermits({ projectId, propertyId }: { projectId: string, p
         return () => {
             supabase.removeChannel(channel);
         }
-    }, [projectId]);
+    }, [projectId, supabase, fetchPermits]);
 
     const getStatus = (authority: string) => {
         const permit = permits.find(p => p.authority === authority);
@@ -114,7 +113,7 @@ export function ProjectPermits({ projectId, propertyId }: { projectId: string, p
                                                 <DialogHeader>
                                                     <DialogTitle>Upload {req.title}</DialogTitle>
                                                     <DialogDescription>
-                                                        Please upload the valid PDF document. AI will verify the "Approved" or "No Objection" status.
+                                                        Please upload the valid PDF document. AI will verify the &quot;Approved&quot; or &quot;No Objection&quot; status.
                                                     </DialogDescription>
                                                 </DialogHeader>
                                                 <SmartUploader

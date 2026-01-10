@@ -16,24 +16,32 @@ export default async function DesignPage({ params }: PageProps) {
 
     // Auto-create default room if no spaces exist (Streamlined onboarding)
     if (!spaces || spaces.length === 0) {
-        await createDefaultSpace(projectId);
-        // Re-fetch handled by revalidatePath in action or basic reload logic
-        // But here we might just need to push one manually if action doesn't return list
+        const newSpace = await createDefaultSpace(projectId);
+        if (newSpace) {
+            spaces.push(newSpace);
+        }
     }
 
-    const initialSpaces = spaces && spaces.length > 0 ? spaces : [{ id: 'temp', name: 'Loading...', dimensions: { l: 5, w: 5, h: 3 } }];
+    const initialSpaces = spaces && spaces.length > 0 ? spaces : [{ id: 'temp', projectId, name: 'Loading...', dimensions: { l: 5, w: 5, h: 3 }, created_at: '', model_url: null }];
     const activeSpaceId = initialSpaces[0].id;
 
     return (
         <div className="h-full w-full relative">
             <DesignStudio
                 projectId={projectId}
-                spaces={initialSpaces}
-                initialSpaceId={activeSpaceId}
+                initialSpaceId={initialSpaces[0].id}
+                spaces={spaces.map(s => ({
+                    ...s,
+                    model_url: s.model_url || '',
+                    dimensions: s.dimensions as { l: number; w: number; h: number }
+                }))}
             />
 
             {/* Dev Helper: Seed Button */}
-            <form action={seedCatalog} className="absolute bottom-4 right-64 ml-4 z-50">
+            <form action={async (formData: FormData) => {
+                'use server';
+                await seedCatalog();
+            }} className="absolute bottom-4 right-64 ml-4 z-50">
                 <Button type="submit" variant="secondary" size="sm" className="opacity-70 hover:opacity-100 shadow-md bg-white text-slate-700">
                     🌱 Populate Catalog
                 </Button>

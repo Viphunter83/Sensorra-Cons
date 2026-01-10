@@ -107,6 +107,51 @@ export type Database = {
           }
         ]
       }
+      timeline_events: {
+        Row: {
+          id: string
+          project_id: string
+          title: string
+          description: string | null
+          category: string
+          event_date: string
+          media_urls: string[] | null
+          verified: boolean
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          title: string
+          description?: string | null
+          category: string
+          event_date?: string
+          media_urls?: string[] | null
+          verified?: boolean
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          title?: string
+          description?: string | null
+          category?: string
+          event_date?: string
+          media_urls?: string[] | null
+          verified?: boolean
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+
       documents: {
         Row: {
           id: string
@@ -287,6 +332,8 @@ export type Database = {
           title: string
           architect_id: string | null
           status: "design" | "permitting" | "construction" | "handover"
+          public_access_token: string | null
+          is_public: boolean | null
           created_at: string
         }
         Insert: {
@@ -295,6 +342,8 @@ export type Database = {
           title: string
           architect_id?: string | null
           status?: "design" | "permitting" | "construction" | "handover"
+          public_access_token?: string | null
+          is_public?: boolean | null
           created_at?: string
         }
         Update: {
@@ -303,6 +352,8 @@ export type Database = {
           title?: string
           architect_id?: string | null
           status?: "design" | "permitting" | "construction" | "handover"
+          public_access_token?: string | null
+          is_public?: boolean | null
           created_at?: string
         }
         Relationships: [

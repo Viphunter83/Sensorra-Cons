@@ -22,8 +22,8 @@ export async function storeProjectContext(projectId: string, content: string) {
     const { error } = await supabase.from('project_embeddings').insert([{
         project_id: projectId,
         content,
-        embedding: embedding as any
-    }] as any);
+        embedding: embedding as any // Supabase client handles number[] -> vector string conversion
+    }]);
 
     if (error) console.error('Error storing project context:', error);
 }
@@ -34,26 +34,26 @@ export async function retrieveContext(query: string, projectId?: string) {
 
     // 1. Search Global Knowledge Base
     const { data: globalContext } = await supabase.rpc('match_knowledge_base', {
-        query_embedding: embedding as any,
+        query_embedding: embedding,
         match_threshold: 0.5,
         match_count: 2
-    } as any);
-
-    let projectContext: any[] = [];
+    });
 
     // 2. Search Project Context (if applicable)
+    let projectContext: { content: string }[] = [];
+
     if (projectId) {
         const { data: pContext } = await supabase.rpc('match_project_context', {
-            query_embedding: embedding as any,
+            query_embedding: embedding,
             target_project_id: projectId,
             match_threshold: 0.5,
             match_count: 3
-        } as any);
+        });
         projectContext = pContext || [];
     }
 
     return {
-        global: (globalContext as unknown as any[])?.map((c: any) => c.content).join('\n') || '',
-        project: (projectContext as unknown as any[])?.map((c: any) => c.content).join('\n') || ''
+        global: globalContext?.map(c => c.content).join('\n') || '',
+        project: projectContext?.map(c => c.content).join('\n') || ''
     };
 }

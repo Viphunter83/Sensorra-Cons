@@ -5,20 +5,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { Database } from '@/types/database.types';
+
+type BidWithItems = Database['public']['Tables']['bids']['Row'] & {
+    bid_items: Database['public']['Tables']['bid_items']['Row'][];
+    profiles: Database['public']['Tables']['profiles']['Row'] | null;
+};
+
 interface BidItemRow {
     name: string;
     quantity: number;
     prices: number[];
 }
 
-export function BidComparisonMatrix({ bids }: { bids: any[] }) {
+export function BidComparisonMatrix({ bids }: { bids: BidWithItems[] }) {
     if (!bids || bids.length === 0) return null;
 
     // 1. Flatten all unique item descriptions to form rows
     const allItemsMap = new Map<string, BidItemRow>();
 
     bids.forEach(bid => {
-        bid.bid_items?.forEach((item: any) => {
+        bid.bid_items?.forEach((item) => {
             // Group by description (fuzzy match ideally, strict for now)
             if (!allItemsMap.has(item.description)) {
                 allItemsMap.set(item.description, {
@@ -29,7 +36,7 @@ export function BidComparisonMatrix({ bids }: { bids: any[] }) {
             }
             const row = allItemsMap.get(item.description);
             if (row) {
-                row.prices.push(item.unit_price);
+                row.prices.push(item.unit_price ?? 0);
             }
         });
     });
@@ -68,7 +75,7 @@ export function BidComparisonMatrix({ bids }: { bids: any[] }) {
                             <TableCell className="font-medium text-slate-700">{row.name}</TableCell>
                             <TableCell className="text-slate-500">{row.quantity}</TableCell>
                             {bids.map(bid => {
-                                const item = bid.bid_items?.find((i: any) => i.description === row.name);
+                                const item = bid.bid_items?.find((i) => i.description === row.name);
                                 if (!item) return <TableCell key={bid.id} className="text-center border-l text-slate-300">-</TableCell>;
 
                                 const others = (rows.find(r => r.name === row.name)?.prices || []).filter((p: number) => p !== item.unit_price);

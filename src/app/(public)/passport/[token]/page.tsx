@@ -53,11 +53,13 @@ export default async function PassportPage({ params }: { params: Promise<{ token
                         <div className="flex flex-wrap gap-4 text-slate-400">
                             <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
                                 <MapPin className="w-4 h-4 text-yellow-500" />
-                                {project.properties?.address || "Unknown Location"}
+                                {/* @ts-ignore: address_data is JSON */}
+                                {project.properties?.address_data?.formatted || project.properties?.address_data?.city || "Location Protected"}
                             </div>
                             <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
                                 <Ruler className="w-4 h-4 text-yellow-500" />
-                                {project.properties?.size_sqm} m²
+                                {/* @ts-ignore: specs is JSON */}
+                                {project.properties?.specs?.size_sqm || "N/A"} m²
                             </div>
                         </div>
                         <p className="text-xl text-slate-300 font-light leading-relaxed">
@@ -71,8 +73,8 @@ export default async function PassportPage({ params }: { params: Promise<{ token
                         {mainSpace ? (
                             <SpaceViewer
                                 modelUrl={mainSpace.model_url}
-                                dimensions={mainSpace.dimensions}
-                                items={designBoard?.items || []}
+                                dimensions={mainSpace.dimensions as { l: number; w: number; h: number }}
+                                items={(designBoard?.items as any[]) || []}
                                 isDesignMode={false} // Read Only
                             />
                         ) : (

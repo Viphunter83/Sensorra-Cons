@@ -256,3 +256,59 @@ export async function parseContractorQuote(promptText: string): Promise<{ items:
         return { items: [], total: 0 };
     }
 }
+// ... existing code ...
+
+export async function generateEmbedding(text: string): Promise<number[]> {
+    try {
+        const response = await openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: text.replace(/\n/g, ' '),
+            encoding_format: "float",
+        });
+
+        return response.data[0].embedding;
+    } catch (error) {
+        console.error("Embedding generation failed:", error);
+        throw error;
+    }
+}
+
+export async function describeImageForSearch(imageBase64: string): Promise<string> {
+    const prompt = `
+    Analyze this image of a furniture item or interior element.
+    Provide a detailed visual description suitable for a search query.
+    Include:
+    - Style (e.g., modern, classic, industrial)
+    - Material (e.g., leather, velvet, oak wood, metal)
+    - Color (e.g., navy blue, beige, matte black)
+    - Type (e.g., armchair, section sofa, coffee table)
+    
+    Return ONLY the descriptive text paragraph. No intro/outro.
+    `;
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: prompt },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: imageBase64
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens: 150
+        });
+
+        return response.choices[0].message.content || "";
+    } catch (error) {
+        console.error("Image description failed:", error);
+        throw error;
+    }
+}

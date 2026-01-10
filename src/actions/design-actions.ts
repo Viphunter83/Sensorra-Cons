@@ -65,3 +65,50 @@ export async function saveDesignItems(boardId: string, items: any[]) {
 
     if (error) throw error;
 }
+import { generateEmbedding, describeImageForSearch, analyzeDocument } from '@/lib/ai/analyzer';
+
+export interface SimilarItem {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    image_url: string;
+    similarity: number;
+}
+
+export async function findSimilarItems(imageBase64: string, category?: string): Promise<{ success: boolean; data?: SimilarItem[]; error?: string }> {
+    const supabase = await createClient();
+
+    try {
+        // 1. Describe the image using Vision AI
+        console.log("Analyzing image...", imageBase64.substring(0, 50));
+        const description = await describeImageForSearch(imageBase64);
+        console.log("Generated Description:", description);
+
+        // 2. Generate Embedding from description
+        console.log("Generating embedding...");
+        const embedding = await generateEmbedding(description);
+
+        // 3. Search Catalog
+        console.log("Searching catalog...");
+
+        // Note: RPC call requires verified function in DB.
+        const { data, error } = await supabase.rpc('search_catalog_items', {
+            query_embedding: embedding,
+            match_threshold: 0.5, // Adjust as needed
+            match_count: 5,
+            filter_category: category || null
+        });
+
+        if (error) {
+            console.error("Supabase RPC error:", error);
+            throw new Error(error.message);
+        }
+
+        return { success: true, data: data as SimilarItem[] };
+
+    } catch (err: any) {
+        console.error("Reverse Sourcing Failed:", err);
+        return { success: false, error: err.message };
+    }
+}
