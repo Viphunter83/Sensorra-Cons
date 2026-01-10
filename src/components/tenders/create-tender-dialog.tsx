@@ -11,9 +11,11 @@ import { Loader2, Wand2 } from 'lucide-react'
 interface CreateTenderDialogProps {
     propertyId: string
     zone: string
+    initialRequest?: string
+    attachmentUrl?: string | null
 }
 
-export function CreateTenderDialog({ propertyId, zone }: CreateTenderDialogProps) {
+export function CreateTenderDialog({ propertyId, zone, initialRequest = '', attachmentUrl }: CreateTenderDialogProps) {
     const [open, setOpen] = useState(false)
     const [request, setRequest] = useState('')
     const [loading, setLoading] = useState(false)
@@ -70,6 +72,17 @@ export function CreateTenderDialog({ propertyId, zone }: CreateTenderDialogProps
                             value={request}
                             onChange={(e) => setRequest(e.target.value)}
                         />
+
+                        {/* Attachment Preview */}
+                        {attachmentUrl && (
+                            <div className="relative rounded-md overflow-hidden border border-slate-200">
+                                <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded backdrop-blur">
+                                    Attached 3D View
+                                </div>
+                                <img src={attachmentUrl} alt="3D Analysis" className="w-full h-32 object-cover bg-slate-100" />
+                            </div>
+                        )}
+
                         <div className="flex justify-end pt-2">
                             <Button onClick={handleCreate} disabled={loading || !request.trim()}>
                                 {loading ? (

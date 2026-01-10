@@ -1,12 +1,23 @@
-'use server';
 
-import { createClient } from '@/utils/supabase/server';
-import OpenAI from 'openai';
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
-const openai = process.env.PROXY_API_KEY ? new OpenAI({
-    apiKey: process.env.PROXY_API_KEY,
-    baseURL: process.env.PROXY_BASE_URL,
-}) : null;
+// Manual Env Load
+try {
+    const envPath = path.resolve(process.cwd(), '.env.local');
+    const envFile = fs.readFileSync(envPath, 'utf8');
+    envFile.split('\n').forEach(line => {
+        const [key, val] = line.split('=');
+        if (key && val) process.env[key.trim()] = val.trim().replace(/"/g, '');
+    });
+} catch (e) {
+    console.log("No .env.local found, assuming env vars set");
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const SAMPLE_ITEMS = [
     {
@@ -16,7 +27,6 @@ const SAMPLE_ITEMS = [
         price: 5200,
         dimensions: { l: 2.2, w: 0.9, h: 0.8 },
         image_url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=300",
-        // Using a high-quality GLB from Khronos Samples
         model_url: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SheenChair/glTF-Binary/SheenChair.glb"
     },
     {
@@ -26,9 +36,7 @@ const SAMPLE_ITEMS = [
         price: 1800,
         dimensions: { l: 1.2, w: 0.6, h: 0.4 },
         image_url: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?auto=format&fit=crop&q=80&w=300",
-        // Using a table model
         model_url: "https://media.githubusercontent.com/media/KhronosGroup/glTF-Sample-Models/master/2.0/AntiqueCamera/glTF-Binary/AntiqueCamera.glb"
-        // Note: Replacing with camera for demo as robust table GLBs are harder to direct link, referencing stable sample
     },
     {
         name: "Modern Floor Lamp",
@@ -47,34 +55,16 @@ const SAMPLE_ITEMS = [
         dimensions: { l: 0.5, w: 0.5, h: 1.2 },
         image_url: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&q=80&w=300",
         model_url: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoomBox/glTF-Binary/BoomBox.glb"
-        // Placeholder GLB that surely works; finding specific plant GLB requires external assets
     }
 ];
 
-export async function seedCatalog(formData?: FormData) {
-    const supabase = await createClient();
-    console.log("Starting seed...");
+async function main() {
+    console.log("Seeding catalog (Standalone)...");
 
     for (const item of SAMPLE_ITEMS) {
-        // Generate embedding (Safe Fallback)
-        let embedding: number[] = [];
-        try {
-            if (openai) {
-                const embeddingResponse = await openai.embeddings.create({
-                    model: 'text-embedding-3-small',
-                    input: `${item.name}. ${item.description}`,
-                });
-                embedding = embeddingResponse.data[0].embedding;
-            } else {
-                console.warn("No API Key, using mock embedding for", item.name);
-                embedding = new Array(1536).fill(0);
-            }
-        } catch (e) {
-            console.error("Embedding failed", e);
-            embedding = new Array(1536).fill(0);
-        }
+        // Mock embedding
+        const embedding = new Array(1536).fill(0);
 
-        // Insert
         const { error } = await supabase.from('catalog_items').insert({
             ...item,
             currency: 'AED',
@@ -82,16 +72,12 @@ export async function seedCatalog(formData?: FormData) {
         });
 
         if (error) {
-            console.error("Failed to insert", item.name, error);
-            return { success: false, error: error.message };
+            console.error("Failed:", item.name, error.message);
         } else {
-            console.log("Inserted", item.name);
+            console.log("Inserted:", item.name);
         }
     }
-
-    // Refresh the page so the new items appear in the marketplace feed
-    const { revalidatePath } = await import('next/cache');
-    revalidatePath('/', 'layout');
-
-    return { success: true, count: SAMPLE_ITEMS.length };
+    console.log("Done.");
 }
+
+main();

@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState, useRef, useEffect } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, ContactShadows, TransformControls, Html } from '@react-three/drei';
+import { OrbitControls, useGLTF, Environment, ContactShadows, TransformControls, Html, Edges } from '@react-three/drei';
 import * as THREE from 'three';
 import { DreamControlPanel } from './dream-panel';
 import { DreamPlacedItem, DreamResult } from '@/actions/dream-actions';
@@ -49,11 +49,20 @@ function GLTFRoom({ url }: { url: string }) {
 
 function DefaultRoom({ dimensions }: { dimensions: { l: number; w: number; h: number } }) {
     return (
-        <mesh position={[0, dimensions.h / 2, 0]}>
-            <boxGeometry args={[dimensions.l, dimensions.h, dimensions.w]} />
-            <meshStandardMaterial color="#f0f0f0" side={THREE.BackSide} />
-            <gridHelper args={[Math.max(dimensions.l, dimensions.w), 10]} position={[0, -dimensions.h / 2 + 0.01, 0]} />
-        </mesh>
+        <group position={[0, dimensions.h / 2, 0]}>
+            {/* Floor */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -dimensions.h / 2, 0]}>
+                <planeGeometry args={[dimensions.l, dimensions.w]} />
+                <meshStandardMaterial color="#f0f2f5" roughness={0.8} />
+                <gridHelper args={[Math.max(dimensions.l, dimensions.w), Math.max(dimensions.l, dimensions.w) * 2, "#e2e8f0", "#e2e8f0"]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
+            </mesh>
+
+            {/* Walls (Simple Box reversed) */}
+            <mesh>
+                <boxGeometry args={[dimensions.l, dimensions.h, dimensions.w]} />
+                <meshStandardMaterial color="#ffffff" side={THREE.BackSide} roughness={0.5} />
+            </mesh>
+        </group>
     );
 }
 
@@ -109,7 +118,7 @@ function ItemMesh({ item, modelUrl, onSelect }: { item: PlacedItem, modelUrl?: s
         return <ModelFromUrl url={modelUrl} position={item.position} rotation={item.rotation} onClick={onSelect} />;
     }
 
-    // Fallback Box
+    // Fallback Box (Professional White Clay)
     return (
         <mesh
             position={item.position}
@@ -118,12 +127,17 @@ function ItemMesh({ item, modelUrl, onSelect }: { item: PlacedItem, modelUrl?: s
                 e.stopPropagation();
                 onSelect();
             }}
+            castShadow
+            receiveShadow
         >
             <boxGeometry args={[0.5, 0.5, 0.5]} />
-            <meshStandardMaterial color="hotpink" />
-            <Html position={[0, 1, 0]}>
-                <div className="bg-black/50 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                    {item.catalog_item?.name || 'Unknown Item'}
+            <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
+            <Edges color="#cbd5e1" threshold={15} />
+
+            {/* Hover Tooltip (Optional, improved) */}
+            <Html position={[0, 0.8, 0]} center distanceFactor={10} style={{ pointerEvents: 'none' }}>
+                <div className="bg-slate-900/80 backdrop-blur text-white text-[10px] px-2 py-1 rounded shadow-lg border border-white/10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    {item.catalog_item?.name || 'Object'}
                 </div>
             </Html>
         </mesh>

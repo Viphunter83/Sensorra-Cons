@@ -1,7 +1,7 @@
 'use client'
 
 import { usePropertyStore } from '@/lib/store/property-store'
-import PropertySpaceWrapper from '@/components/design/property-space-wrapper'
+import DesignStudio from '@/components/design/design-studio'
 import { DocumentFeed } from '@/components/dashboard/document-feed'
 import { CreateTenderDialog } from '@/components/tenders/create-tender-dialog'
 import { Input } from '@/components/ui/input'
@@ -23,32 +23,30 @@ export default function ClientPropertyPage({ propertyId, initialSpace, initialBo
     return (
         <div className="flex h-screen w-full flex-col md:flex-row overflow-hidden bg-background font-sans">
             {/* Left Panel - 3D Twin */}
-            <div className="w-full md:w-[40%] h-[50vh] md:h-full border-r relative bg-slate-50">
-                <div className="absolute top-4 left-4 z-10 bg-white/90 p-3 rounded-lg shadow-sm backdrop-blur border pointer-events-none">
-                    <h2 className="font-semibold text-sm">Digital Twin Navigator</h2>
-                    <p className="text-xs text-muted-foreground mt-1">Click "AI Magic Design" to dream up a new room.</p>
-                </div>
-
+            <div className="w-full md:w-[40%] h-[50vh] md:h-full border-r relative bg-slate-50 flex flex-col">
                 {selectedZone && (
-                    <div className="absolute bottom-8 left-0 right-0 z-10 flex justify-center pointer-events-none">
+                    <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center pointer-events-none">
                         <div className="pointer-events-auto bg-white/90 p-2 rounded-lg shadow-lg backdrop-blur">
                             <CreateTenderDialog propertyId={propertyId} zone={selectedZone} />
                         </div>
                     </div>
                 )}
-
-                {/* 3D Canvas with Persistence */}
+                {/* 3D Studio */}
                 <div className="h-full w-full">
-                    {initialBoard ? (
-                        <PropertySpaceWrapper
-                            boardId={initialBoard.id}
-                            modelUrl={initialSpace?.model_url}
-                            dimensions={initialSpace?.dimensions}
-                            initialItems={initialItems}
+                    {initialSpace ? (
+                        <DesignStudio
+                            spaces={[{
+                                id: initialSpace.id,
+                                name: initialSpace.name || 'Main Space',
+                                model_url: initialSpace.model_url || '',
+                                dimensions: initialSpace.dimensions || { l: 5, w: 5, h: 3 }
+                            }]}
+                            initialSpaceId={initialSpace.id}
+                            mode="embedded"
                         />
                     ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                            Initializing Space...
+                        <div className="flex items-center justify-center h-full text-muted-foreground flex-col gap-2">
+                            <p>Initializing Space...</p>
                         </div>
                     )}
                 </div>

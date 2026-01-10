@@ -6,8 +6,9 @@ import MarketplaceFeed from '../shop/marketplace-feed';
 import RoomNavigator from './room-navigator';
 import StyleSelector from './style-selector';
 import { saveDesignItems, getDesignBoard, findSimilarItems, SimilarItem } from '@/actions/design-actions';
-import { Save, Loader2, Search, X, Box, Wand2 } from 'lucide-react';
+import { Save, Loader2, Search, X, Box, Wand2, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CreateTenderDialog } from '@/components/tenders/create-tender-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useDesignStore } from '@/stores/design-store';
@@ -26,17 +27,27 @@ interface DesignBoard {
 }
 
 interface DesignStudioProps {
-    projectId: string; // Kept for future use
+    projectId?: string; // Optional now as Property Page might not have project context yet? Or it uses property data.
     spaces: Space[];
     initialSpaceId: string;
+    mode?: 'full' | 'embedded';
 }
 
-export default function DesignStudio({ spaces: initialSpaces, initialSpaceId }: DesignStudioProps) {
+export default function DesignStudio({ spaces: initialSpaces, initialSpaceId, mode = 'full' }: DesignStudioProps) {
     const [spaces] = useState(initialSpaces);
     const [activeSpaceId, setActiveSpaceId] = useState(initialSpaceId);
 
     // Geometric Consistency Capture Ref
     const captureRef = React.useRef<(() => string) | null>(null);
+
+    // Context-Aware Dream Logic
+    const STYLE_PRESETS: Record<string, string> = {
+        'modern': 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=1600',
+        'japandi': 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1600', // Beige/Wood
+        'industrial': 'https://images.unsplash.com/photo-1593856509924-417151199884?q=80&w=1600', // Concrete/Dark
+        'luxury': 'https://images.unsplash.com/photo-1600596542815-e32c8ec23fc9?q=80&w=1600', // Gold/Marble
+        'minimalist': 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=1600', // White
+    };
 
     // Derived state
     const activeSpace = spaces.find(s => s.id === activeSpaceId) || spaces[0];
@@ -125,11 +136,32 @@ export default function DesignStudio({ spaces: initialSpaces, initialSpaceId }: 
         setIsDreaming(true);
         setViewMode('dream');
 
-        // Simulate API Response time
-        await new Promise(r => setTimeout(r, 2000));
+        // Simulate API Response time with variance
+        const processingTime = 2000 + Math.random() * 1000;
+        await new Promise(r => setTimeout(r, processingTime));
 
-        setDreamImage("https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=1000&auto=format&fit=crop");
+        // Intelligent selection (Mock)
+        const matchedImage = STYLE_PRESETS[selectedStyle] || STYLE_PRESETS['modern'];
+        setDreamImage(matchedImage);
+
+        toast.success(`Generated ${selectedStyle} design proposal`);
         setIsDreaming(false);
+        toast.success(`Generated ${selectedStyle} design proposal`);
+        setIsDreaming(false);
+    };
+
+    // Tender / Procurement Bridge
+    const [tenderDialogOpen, setTenderDialogOpen] = useState(false);
+    const [tenderAttachment, setTenderAttachment] = useState<string | null>(null);
+
+    const handleOpenTender = () => {
+        if (captureRef.current) {
+            const dataUrl = captureRef.current();
+            setTenderAttachment(dataUrl);
+            setTenderDialogOpen(true);
+        } else {
+            toast.error("Scene not ready for capture");
+        }
     };
 
     // Sourcing Logic
@@ -211,14 +243,16 @@ export default function DesignStudio({ spaces: initialSpaces, initialSpaceId }: 
     const isDesignModeBool = viewMode === 'edit';
 
     return (
-        <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-slate-50 relative">
-            {/* Left: Room Navigator */}
-            <RoomNavigator
-                spaces={spaces}
-                activeSpaceId={activeSpaceId}
-                onSelectSpace={(s) => setActiveSpaceId(s.id)}
-                onCreateSpace={handleCreateSpace}
-            />
+        <div className={`flex w-full overflow-hidden bg-slate-50 relative ${mode === 'full' ? 'h-[calc(100vh-64px)]' : 'h-full'}`}>
+            {/* Left: Room Navigator - Hidden in embedded mode for simplicity unless toggled (feature for later) */}
+            {mode === 'full' && (
+                <RoomNavigator
+                    spaces={spaces}
+                    activeSpaceId={activeSpaceId}
+                    onSelectSpace={(s) => setActiveSpaceId(s.id)}
+                    onCreateSpace={handleCreateSpace}
+                />
+            )}
 
             {/* Middle: 3D Canvas Area */}
             <div
@@ -240,6 +274,7 @@ export default function DesignStudio({ spaces: initialSpaces, initialSpaceId }: 
                             onSelectStyle={setSelectedStyle}
                             onGenerate={handleDream}
                             isGenerating={isDreaming}
+                            compact={mode === 'embedded'}
                         />
 
                         {/* Reality Source Button */}
@@ -266,6 +301,16 @@ export default function DesignStudio({ spaces: initialSpaces, initialSpaceId }: 
                                 {isDesignModeBool ? "Design" : "View"}
                             </Label>
                         </div>
+
+                        <Button
+                            onClick={handleOpenTender}
+                            variant="default"
+                            size="sm"
+                            className="bg-indigo-600 hover:bg-indigo-700 gap-2 shadow-sm"
+                        >
+                            <Calculator className="w-4 h-4" />
+                            Create Tender
+                        </Button>
 
                         <Button
                             onClick={handleSave}
@@ -297,7 +342,7 @@ export default function DesignStudio({ spaces: initialSpaces, initialSpaceId }: 
                         />
                     )}
 
-                    {isDesignModeBool && !loading && (
+                    {isDesignModeBool && !loading && mode === 'full' && (
                         <div className="absolute bottom-6 left-6 pointer-events-none">
                             <div className="bg-black/75 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm shadow flex items-center gap-2">
                                 <Box className="w-4 h-4 text-blue-400" />
@@ -370,13 +415,20 @@ export default function DesignStudio({ spaces: initialSpaces, initialSpaceId }: 
                 </div>
             </div>
 
-            {/* Right Panel: Marketplace */}
-            <div className="w-80 h-full border-l border-slate-200 bg-white">
-                <MarketplaceFeed
-                    spaceId={activeSpace.id}
-                    onItemSelect={(item) => handleAddItem(item)}
-                />
-            </div>
+            {/* Right Panel: Marketplace - Conditional Update */}
+            {/* Procurement Bridge Dialog */}
+            {tenderDialogOpen && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm" onClick={() => setTenderDialogOpen(false)}>
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <CreateTenderDialog
+                            propertyId={activeSpace.id} // Using Space ID as proxy for property context for now
+                            zone={activeSpace.name}
+                            initialRequest="I want to implement this design. Please provide a quote for the furniture and finishing works."
+                            attachmentUrl={tenderAttachment}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -21,6 +21,16 @@ export default async function DashboardPage() {
 
     const property = properties?.[0];
 
+    // Fetch active renovation project for this property
+    const { data: projects } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("property_id", property?.id || "")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+    const activeProject = projects?.[0];
+
     // Fetch recent documents
     const { data: documents } = await supabase
         .from("documents")
@@ -37,24 +47,28 @@ export default async function DashboardPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-6">
                         {/* Digital Twin Card */}
-                        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden relative border-0 shadow-lg">
-                            <div className="absolute right-0 top-0 h-full w-1/3 bg-white/5 skew-x-12 pointer-events-none" />
-                            <CardHeader>
+                        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden relative border-0 shadow-lg group">
+                            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2666&auto=format&fit=crop')] bg-cover bg-center opacity-40 group-hover:opacity-50 transition-opacity" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent" />
+
+                            <CardHeader className="relative z-10">
                                 <CardTitle className="flex items-center gap-2 text-white">
                                     <Box className="h-5 w-5 text-blue-400" />
                                     Digital Twin
                                 </CardTitle>
-                                <CardDescription className="text-slate-300">
-                                    Interactive 3D model of your property
+                                <CardDescription className="text-slate-200">
+                                    {activeProject ? "Active Renovation Mode" : "Property View"}
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-slate-400 mb-6">
-                                    Navigate through rooms and find localized documents instantly.
+                            <CardContent className="relative z-10">
+                                <p className="text-sm text-slate-300 mb-6 font-light">
+                                    {activeProject
+                                        ? `Make changes to "${activeProject.title}" in the high-fidelity design studio.`
+                                        : "Initialize a new project to start designing your digital twin."}
                                 </p>
-                                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white border-0 font-medium" asChild>
-                                    <Link href={`/property/${(property as any).id}`}>
-                                        Launch 3D Viewer
+                                <Button className="w-full bg-blue-500/90 hover:bg-blue-500 text-white border-0 font-medium backdrop-blur-sm" asChild>
+                                    <Link href={activeProject ? `/projects/${activeProject.id}/design` : `/projects`}>
+                                        {activeProject ? "Open Design Studio" : "Create Project"}
                                     </Link>
                                 </Button>
                             </CardContent>
